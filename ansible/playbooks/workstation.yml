@@ -1,0 +1,9 @@
+- hosts: all
+  become: true
+
+  roles:
+    - base
+    - os_ubuntu
+    - desktop
+    - apps
+    - cleanup

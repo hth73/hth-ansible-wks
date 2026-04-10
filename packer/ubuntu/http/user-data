@@ -1,0 +1,30 @@
+#cloud-config
+autoinstall:
+  version: 1
+
+  source:
+    id: ubuntu-desktop-minimal
+
+  identity:
+    hostname: ubuntu-wks
+    username: packer
+    password: "$6$GcQT8k4Sw6fnJaQS$r/MA/AQSgNIKqUU26s4LNWXI.RSHfS3G3xYwk1Ut7RdHL3Gvc9NoUzkxjoC24x9hMdwTVazcqUnHxd0DtbNJs/" # openssl passwd -6
+
+  ssh:
+    install-server: true
+    allow-pw: true
+
+  locale: en_US.UTF-8
+  keyboard:
+    layout: de
+  timezone: Europe/Berlin
+
+  storage:
+    layout:
+      name: direct
+
+  late-commands:
+    - curtin in-target --target=/target -- chmod 0440 /etc/sudoers.d/90-cloud-init-users || true
+    - curtin in-target --target=/target -- bash -c 'echo "packer ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/packer'
+    - curtin in-target --target=/target -- chmod 440 /etc/sudoers.d/packer
+    - curtin in-target --target=/target -- ufw disable
