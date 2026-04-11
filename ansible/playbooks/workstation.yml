@@ -3,7 +3,3 @@
 
   roles:
     - base
-    - os_ubuntu
-    - desktop
-    - apps
-    - cleanup

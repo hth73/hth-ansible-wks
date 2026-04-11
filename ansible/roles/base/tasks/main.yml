@@ -1,0 +1,59 @@
+---
+- name: "apt update and upgrade"
+  apt:
+    upgrade: 'safe'
+    update_cache: yes 
+    force_apt_get: yes 
+    cache_valid_time: '43200'
+
+- name: Install basic packages
+  apt:
+    name:
+      - ack
+      - apt-transport-https
+      - build-essential
+      - clamav
+      - clamav-daemon
+      - clamtk
+      - curl
+      - direnv
+      - dirmngr
+      - dkms
+      - fdupes
+      - figlet
+      - git
+      - gnupg
+      - gnupg-agent
+      - gufw
+      - htop
+      - iotop
+      - ipcalc
+      - keepassxc
+      - lsof
+      - manpages-de
+      - meld
+      - ncdu
+      - neofetch
+      - net-tools
+      - p7zip-full
+      - pdftk
+      - pwgen
+      - shellcheck
+      - shutter
+      - silversearcher-ag
+      - ssh
+      - sysstat
+      - testssl.sh
+      - tmux
+      - traceroute
+      - tree
+      - ufw
+      - unzip
+      - vim
+      - wget
+      - whois
+      - xclip
+      - zip
+      - zsh
+    state: present
+    update_cache: yes

@@ -3,16 +3,19 @@ autoinstall:
   version: 1
 
   source:
-    id: ubuntu-desktop-minimal
+    id: ubuntu-desktop
 
   identity:
-    hostname: ubuntu-wks
-    username: packer
-    password: "$6$GcQT8k4Sw6fnJaQS$r/MA/AQSgNIKqUU26s4LNWXI.RSHfS3G3xYwk1Ut7RdHL3Gvc9NoUzkxjoC24x9hMdwTVazcqUnHxd0DtbNJs/" # openssl passwd -6
+    hostname: ubuntu-client
+    username: vagrant
+    password: "$6$pjTmy9AUbDZgp9Es$NIJcQKoiW93K/p9MuShvd1aorK1fq7L.tQQQDT3wiLNjM6p6.3y1T9ActGwwbKtdEnhNorRVLgOH6toWtGpH21" # openssl passwd -6 vagrant
 
   ssh:
     install-server: true
     allow-pw: true
+    authorized-keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICn/bnaOdeE/cZaqbDXVP9q96Rj5gs878+9806K0UK2L helmut@thurnhofer.net
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJVpcUidKX5g1Ydq4HW3H560hVzVD5pEHbM8zHHwFYlT spox@vagrant-dev
 
   locale: en_US.UTF-8
   keyboard:
@@ -23,8 +26,14 @@ autoinstall:
     layout:
       name: direct
 
+  packages:
+    - python3
+
   late-commands:
     - curtin in-target --target=/target -- chmod 0440 /etc/sudoers.d/90-cloud-init-users || true
-    - curtin in-target --target=/target -- bash -c 'echo "packer ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/packer'
-    - curtin in-target --target=/target -- chmod 440 /etc/sudoers.d/packer
-    - curtin in-target --target=/target -- ufw disable
+    - curtin in-target --target=/target -- bash -c 'echo "vagrant ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/vagrant'
+    - curtin in-target --target=/target -- chmod 440 /etc/sudoers.d/vagrant
+    - curtin in-target --target=/target -- mkdir -p /home/vagrant/.ssh
+    - curtin in-target --target=/target -- bash -c 'echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJVpcUidKX5g1Ydq4HW3H560hVzVD5pEHbM8zHHwFYlT spox@vagrant-dev" >> /home/vagrant/.ssh/authorized_keys'
+    - curtin in-target --target=/target -- bash -c 'echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICn/bnaOdeE/cZaqbDXVP9q96Rj5gs878+9806K0UK2L helmut@thurnhofer.net" >> /home/vagrant/.ssh/authorized_keys'
+    - curtin in-target --target=/target -- chown -R vagrant:vagrant /home/vagrant/.ssh
