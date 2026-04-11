@@ -1,15 +1,16 @@
-# Ubuntu/Manjaro Linux Grundinstalltion mit Packer, Vagrant und Ansible
+# Ubuntu/Manjaro Linux Unattended Installation mit Packer, Vagrant und Ansible
 
 <img src="https://img.shields.io/badge/Ubuntu-f24e20?logo=ubuntu&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Manjaro-00bfa5?logo=manjaro&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/virtualbox-033467?logo=virtualbox&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Packer-00affb?logo=packer&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Ansible-d5000e?logo=ansible&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Vagrant-0e6aec?logo=vagrant&logoColor=white&style=flat" />
 
 ---
 ## Beschreibung
-Dieses kleine Projekt automatisiert mir die Erstellung von Ubuntu- und (zukünftig) Manjaro-Desktop-VMs in VirtualBox.<br>
+
+Dieses kleine Projekt automatisiert mir meine Ubuntu- und (zukünftig) Manjaro-Desktop-VMs in VirtualBox.<br>
 Ziel ist es, schnell reproduzierbare Linux-Testmaschinen bereitzustellen, ohne manuelle Installation und Konfiguration.
 
-Der Aufbau erfolgt in drei klar getrennten Schritten:
+Der Aufbau erfolgt in drei Schritten:
 1. **Packer (Image Build)**
-   - Verwendet ein Ubuntu ISO (lokal oder remote)
+   - Verwendet ein Ubuntu/Manjaro ISO (lokal oder remote)
    - Führt eine unbeaufsichtigte Installation (autoinstall/cloud-init) durch
    - Erstellt daraus ein minimales, wiederverwendbares Vagrant Base Image
 2. **Vagrant (VM Lifecycle)**
@@ -21,9 +22,30 @@ Der Aufbau erfolgt in drei klar getrennten Schritten:
    - Installiert Pakete und Anwendungen
    - Wendet systemweite Konfigurationen über Rollen an (z. B. base, apps, desktop)
 
-Dadurch wird eine schnelle Iteration und saubere Wiederverwendbarkeit ermöglicht.
+---
+
+### SSH Key Pair für Vagrant anlegen
+
+```bash
+## SSH Key Pair ohne Passphrase anlegen
+##
+[[ -d "vagrant/keys" ]] || mkdir "vagrant/keys"
+ssh-keygen -o -t ed25519 -f vagrant/keys/id_ed25519 -C'spox@vagrant-dev'
+# chmod 0600 vagrant/keys/id_ed25519
+# chmod 0644 vagrant/keys/id_ed25519.pub
+
+cat vagrant/keys/id_ed25519.pub
+vi packer/ubuntu/http/user-data
+
+# ssh:
+#   install-server: true
+#   allow-pw: true
+#   authorized-keys:
+#     - ssh-ed25519 AAAA...FYlT spox@vagrant-dev
+```
 
 ### Ubuntu Image download
+
 ```bash
 #!/usr/bin/env bash
 set -e
@@ -37,7 +59,8 @@ wget -O "${HOME}/vbox/images/ubuntu-${LATEST}-desktop-amd64.iso" "${ISO_URL}"
 ```
 
 ### Packer Build starten
-Nach dem Start von "packer build" wird automatisch eine VirtualBox-VM erstellt und mit dem angegebenen Ubuntu-ISO gebootet. Die Installation erfolgt unbeaufsichtigt anhand der Konfiguration in "http/user-data" (Autoinstall/cloud-init). Während der Installation wird ein Benutzer/Passwort "vagrant" angelegt (inkl. SSH-Zugriff).<br>Nach erfolgreichem Build wird die VM heruntergefahren und von Packer exportiert. Der Export befindet sich im Verzeichnis "packer/ubuntu/output-ubuntu".<br>Im Anschluss wird aus diesem Export automatisch eine Vagrant-Box erstellt. Diese liegt unter "packer/ubuntu/ubuntu-base.box" und dient als Basis für spätere Vagrant-VMs.  
+
+Nach dem Start von **packer build** wird automatisch eine VirtualBox-VM erstellt und mit dem angegebenen Ubuntu-ISO gebootet. Die Installation erfolgt unbeaufsichtigt anhand der Konfiguration in **http/user-data** (Autoinstall/cloud-init). Während der Installation wird ein Benutzer/Passwort "vagrant" angelegt (inkl. SSH-Zugriff).<br>Nach erfolgreichem Build wird die VM heruntergefahren und von Packer exportiert. Der Export befindet sich im Verzeichnis **packer/ubuntu/output-ubuntu**.<br>Im Anschluss wird aus diesem Export automatisch eine Vagrant-Box erstellt. Diese liegt unter **packer/ubuntu/ubuntu-base.box** und dient als Basis für spätere Vagrant-VMs.
 
 ```bash
 cd packer/ubuntu
@@ -46,6 +69,9 @@ packer build ubuntu.pkr.hcl
 ```
 
 ### Vagrant VM starten
-```bash
 
+```bash
+cd ../vagrant
+vagrant box add ../packer/ubuntu/ubuntu-client.box --name ubuntu-client --force
+vagrant up
 ```

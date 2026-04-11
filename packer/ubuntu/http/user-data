@@ -33,7 +33,3 @@ autoinstall:
     - curtin in-target --target=/target -- chmod 0440 /etc/sudoers.d/90-cloud-init-users || true
     - curtin in-target --target=/target -- bash -c 'echo "vagrant ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/vagrant'
     - curtin in-target --target=/target -- chmod 440 /etc/sudoers.d/vagrant
-    - curtin in-target --target=/target -- mkdir -p /home/vagrant/.ssh
-    - curtin in-target --target=/target -- bash -c 'echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJVpcUidKX5g1Ydq4HW3H560hVzVD5pEHbM8zHHwFYlT spox@vagrant-dev" >> /home/vagrant/.ssh/authorized_keys'
-    - curtin in-target --target=/target -- bash -c 'echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICn/bnaOdeE/cZaqbDXVP9q96Rj5gs878+9806K0UK2L hth@htdom.local" >> /home/vagrant/.ssh/authorized_keys'
-    - curtin in-target --target=/target -- chown -R vagrant:vagrant /home/vagrant/.ssh

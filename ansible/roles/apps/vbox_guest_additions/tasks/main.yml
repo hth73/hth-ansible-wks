@@ -1,0 +1,12 @@
+---
+- name: "install virtualbox guest additions"
+  apt:
+    name:
+      - build-essential
+      - dkms
+      - linux-headers-{{ ansible_kernel }}
+      - virtualbox-dkms
+      - virtualbox-guest-utils
+      - virtualbox-guest-x11
+    state: present
+    update_cache: yes
