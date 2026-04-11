@@ -1,2 +1,2 @@
-instance-id: ubuntu-packer
-local-hostname: ubuntu-wks
+instance-id: ubuntu-client
+local-hostname: ubuntu-client
