@@ -71,7 +71,13 @@ packer build ubuntu.pkr.hcl
 ### Vagrant VM starten
 
 ```bash
-cd ../vagrant
-vagrant box add ../packer/ubuntu/ubuntu-client.box --name ubuntu-client --force
+## Ubuntu VM starten
+cd ../vagrant/ubuntu
+vagrant box add ../../packer/ubuntu/ubuntu-client.box --name ubuntu-client --force
+vagrant up
+
+## Manjaro VM starten
+cd ../vagrant/manjaro
+vagrant box add ../../packer/ubuntu/ubuntu-client.box --name ubuntu-client --force
 vagrant up
 ```
