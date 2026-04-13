@@ -1,0 +1,6 @@
+---
+- name: Load OS specific vars
+  include_vars: "{{ ansible_facts['os_family'] | lower }}.yml"
+
+- name: Install tools
+  include_tasks: install.yml

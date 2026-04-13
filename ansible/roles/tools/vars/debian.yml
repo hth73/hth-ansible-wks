@@ -1,0 +1,28 @@
+---
+tools_packages:
+  - ack
+  - bat
+  - cifs-utils
+  - direnv
+  - dirmngr
+  - eza
+  - fdupes
+  - figlet
+  - gufw
+  - ipcalc
+  - jq
+  - meld
+  - neofetch
+  - p7zip-full
+  - pdftk
+  - shellcheck
+  - shutter
+  - silversearcher-ag
+  - testssl.sh
+  - tilix
+  - tmux
+  - tree
+  - unzip
+  - xclip
+  - zip
+  - zsh

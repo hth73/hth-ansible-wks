@@ -3,5 +3,5 @@
 
   roles:
     - base
-    - apps/vbox_guest_additions
-    - apps/tools
+    - virtualization/virtualbox_guest
+    - tools

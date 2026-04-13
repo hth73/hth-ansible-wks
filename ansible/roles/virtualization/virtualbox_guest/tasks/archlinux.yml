@@ -1,0 +1,22 @@
+---
+- name: Install VirtualBox guest utils (Arch)
+  pacman:
+    name: "{{ virtualbox_guest_packages }}"
+    state: present
+    update_cache: true
+
+- name: Check installed mhwd drivers
+  command: mhwd -li
+  register: mhwd_output
+  changed_when: false
+
+- name: Install VirtualBox video driver if missing
+  command: mhwd -a pci nonfree 0300
+  when: "'video-virtualbox' not in mhwd_output.stdout"
+
+- name: Install matching VirtualBox host modules (best effort)
+  pacman:
+    name: "{{ virtualbox_kernel_pkg }}"
+    state: present
+  when: virtualbox_kernel_pkg | length > 0
+  ignore_errors: true

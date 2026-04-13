@@ -1,0 +1,12 @@
+---
+- name: Apt update + upgrade
+  apt:
+    upgrade: safe
+    update_cache: true
+    force_apt_get: true
+    cache_valid_time: 43200
+
+- name: Install base packages (Debian)
+  apt:
+    name: "{{ base_packages }}"
+    state: present

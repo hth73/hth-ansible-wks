@@ -2,91 +2,80 @@
 set -euxo pipefail
 
 # debug logging
-exec > /root/install.log 2>&1
+exec 3>&1 4>&2
+exec > >(tee -a /root/install.log) 2>&1
 
 echo "===> START INSTALL"
 
-# disk automatisch erkennen
+# detect the disk
 DISK=$(lsblk -ndo NAME,TYPE | awk '$2=="disk"{print "/dev/"$1; exit}')
 PART="${DISK}1"
 
 echo "Using disk: $DISK"
 
-# partitionierung
+# partitioning
 parted -s "$DISK" mklabel msdos
 parted -s "$DISK" mkpart primary ext4 1MiB 100%
 parted -s "$DISK" set 1 boot on
 
-# warten damit Kernel die Partition sieht
+# wait until the kernel detects the partition
 sleep 5
 
 # filesystem
 mkfs.ext4 -F "$PART"
 mount "$PART" /mnt
 
-# time fix
+mkdir -p /mnt/root
+exec > >(tee -a /root/install.log /mnt/root/install.log) 2>&1
+
+# fix time issue
 timedatectl set-ntp true
-sleep 5
+sleep 10
 
 # keyring fix (untrusted packages)
+sed -i 's/^SigLevel.*/SigLevel = Never/' /etc/pacman.conf
+
 cat > /etc/pacman.d/mirrorlist <<'EOF'
 Server = https://ftp.gwdg.de/pub/linux/manjaro/stable/$repo/$arch
 Server = https://mirror.netcologne.de/manjaro/stable/$repo/$arch
 EOF
 
-pacman -Syy
-
-sed -i 's/^SigLevel.*/SigLevel = Never/' /etc/pacman.conf
-
 pacman-key --init || true
-pacman-key --populate archlinux manjaro || true
-
-# update keys
-pacman -Sy --noconfirm archlinux-keyring manjaro-keyring
+pacman -Syy
+pacman -Sy --needed --noconfirm pacman glibc manjaro-system archlinux-keyring manjaro-keyring
+sleep 10
 
 # base installation
 command -v basestrap || { echo "basestrap not found"; exit 1; }
-basestrap /mnt base base-devel linux linux-firmware mkinitcpio systemd sudo openssh grub networkmanager
+basestrap /mnt base base-devel linux linux-firmware mkinitcpio systemd sudo vim openssh grub networkmanager mhwd mhwd-db
 
 # fstab
-UUID=$(blkid -s UUID -o value ${PART})
+UUID=$(blkid -s UUID -o value "${PART}")
 
 cat > /mnt/etc/fstab <<EOF
 UUID=$UUID / ext4 defaults 0 1
 EOF
 
-# system konfigurieren
+# system configuration
 mount --bind /dev /mnt/dev
 mount --bind /proc /mnt/proc
 mount --bind /sys /mnt/sys
 
-chroot /mnt /bin/bash <<'EOF'
-
+chroot /mnt /bin/bash -c '
 set -euxo pipefail
 
 echo "===> START CHROOT CONFIG"
 
-echo "===> UPDATE KEYRING"
-pacman-key --init
-pacman-key --populate archlinux manjaro
-pacman -Sy manjaro-keyring --noconfirm --disable-sandbox
-
-echo "===> INSTALL PACKAGES"
-pacman -S vim nano git curl --noconfirm --disable-sandbox
-
 echo "===> SET HOSTNAME"
-# Hostname
 echo "manjaro-client" > /etc/hostname
 
 echo "===> SET LOCALE"
-# Locale
-sed -i 's/^#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+sed -i "s/^#en_US.UTF-8/en_US.UTF-8/" /etc/locale.gen
 locale-gen
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
 echo "KEYMAP=de" > /etc/vconsole.conf
 
 echo "===> CHANGE ROOT PWD"
-# Root Passwort
 echo "root:root" | chpasswd
 
 echo "===> CREATE VAGRANT USER"
@@ -114,16 +103,13 @@ echo "===> INITRAMFS CONFIG"
 mkinitcpio -P
 
 echo "===> CHROOT CONFIG DONE"
+'
 
-EOF
-
-# Cleanup
+# stop logging and cleanup
+exec 1>&3 2>&4
 umount -R /mnt
 
 echo "===> INSTALL DONE"
 
-# sauber herunterfahren
-read -p "Press ENTER to shutdown..."
-bash
-
+# shutdown system
 poweroff

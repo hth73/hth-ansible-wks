@@ -1,0 +1,6 @@
+---
+virtualbox_guest_packages:
+  - virtualbox-guest-utils
+
+# optional dynamisch (wenn benötigt)
+virtualbox_kernel_pkg: ""

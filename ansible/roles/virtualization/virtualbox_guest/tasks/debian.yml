@@ -1,0 +1,6 @@
+---
+- name: Install VirtualBox guest packages (Debian)
+  apt:
+    name: "{{ virtualbox_guest_packages }}"
+    state: present
+    update_cache: true

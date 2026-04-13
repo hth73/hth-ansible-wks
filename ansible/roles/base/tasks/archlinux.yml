@@ -1,0 +1,10 @@
+---
+- name: Pacman update + upgrade
+  pacman:
+    update_cache: true
+    upgrade: true
+
+- name: Install base packages (Arch)
+  pacman:
+    name: "{{ base_packages }}"
+    state: present

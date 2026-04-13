@@ -1,0 +1,8 @@
+---
+virtualbox_guest_packages:
+  - build-essential
+  - dkms
+  - "linux-headers-{{ ansible_kernel }}"
+  - virtualbox-dkms
+  - virtualbox-guest-utils
+  - virtualbox-guest-x11

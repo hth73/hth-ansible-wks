@@ -30,7 +30,7 @@ source "virtualbox-iso" "manjaro" {
   communicator            = "none"
   virtualbox_version_file = ""
   guest_additions_mode    = "disable"
-  shutdown_timeout = "10m"
+  shutdown_timeout        = "60m"
   
   shutdown_command        = "shutdown -P now"
 
