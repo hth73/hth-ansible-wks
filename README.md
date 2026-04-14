@@ -24,10 +24,6 @@ Der Aufbau erfolgt in drei Schritten:
 
 ---
 
-### Packer Build starten
-
-Nach dem Start von **packer build** wird automatisch eine VirtualBox-VM erstellt und mit dem angegebenen Ubuntu-ISO gebootet. Die Installation erfolgt unbeaufsichtigt anhand der Konfiguration in **http/user-data** (Autoinstall/cloud-init). Während der Installation wird ein Benutzer/Passwort "vagrant" angelegt (inkl. SSH-Zugriff).<br>Nach erfolgreichem Build wird die VM heruntergefahren und von Packer exportiert. Der Export befindet sich im Verzeichnis **packer/ubuntu/output-ubuntu**.<br>Im Anschluss wird aus diesem Export automatisch eine Vagrant-Box erstellt. Diese liegt unter **packer/ubuntu/ubuntu-base.box** und dient als Basis für spätere Vagrant-VMs.
-
 ### Inhaltsverzeichnis
 
 * [Ubuntu Packer Build und Vagrant start](packer/ubuntu/README.md)
