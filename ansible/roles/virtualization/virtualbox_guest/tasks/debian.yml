@@ -1,6 +1,75 @@
 ---
-- name: Install VirtualBox guest packages (Debian)
+- name: Mount Host VBox Guest Additions
+  mount:
+    path: /mnt/vbox
+    src: /dev/sr0
+    fstype: iso9660
+    state: mounted
+
+- name: Wait for CDROM device
+  wait_for:
+    path: /dev/sr0
+    timeout: 30
+
+- name: Check VBox ISO content
+  stat:
+    path: /mnt/vbox/VBoxLinuxAdditions.run
+  register: vbox_iso
+
+- name: Fail if ISO not mounted correctly
+  fail:
+    msg: "VBoxGuestAdditions ISO not mounted correctly"
+  when: not vbox_iso.stat.exists
+
+- name: Install build dependencies for VBox
   apt:
-    name: "{{ virtualbox_guest_packages }}"
+    name:
+      - build-essential
+      - dkms
+      - linux-headers-{{ ansible_kernel }}
+      - perl
     state: present
     update_cache: true
+
+- name: Install VBox Guest Additions
+  command: sh /mnt/vbox/VBoxLinuxAdditions.run
+  args:
+    creates: /usr/sbin/VBoxService
+
+- name: Install VBox Guest Additions
+  command: sh /mnt/vbox/VBoxLinuxAdditions.run
+  args:
+    creates: /usr/sbin/VBoxService
+  register: vbox_install
+  failed_when: vbox_install.rc not in [0, 2]
+- debug:
+    var: vbox_install.stdout_lines
+
+- name: Unmount ISO
+  mount:
+    path: /mnt/vbox
+    state: unmounted
+
+- name: Prepare VBox for reboot
+  block:
+    - name: Stop VBox services
+      service:
+        name: "{{ item }}"
+        state: stopped
+      loop:
+        - vboxadd-service
+        - vboxservice
+      ignore_errors: true
+    - name: Unload VBox modules
+      command: modprobe -r vboxsf vboxvideo vboxguest
+      ignore_errors: true
+  when: ansible_facts['virtualization_type'] == "virtualbox"
+
+- name: Reboot
+  reboot:
+
+# - name: Install VirtualBox guest packages (Debian)
+#   apt:
+#     name: "{{ virtualbox_guest_packages }}"
+#     state: present
+#     update_cache: true
