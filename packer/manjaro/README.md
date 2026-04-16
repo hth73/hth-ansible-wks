@@ -11,10 +11,10 @@
 
 Das Manjaro Live Image wurde mit einem eigenen **install.sh** Skript ausgestattet, um eine vollständig automatisierte Basisinstallation zu ermöglichen. Ziel war es, den manuellen Installationsprozess so zu verändern, damit sich dieser in dem Packer-Build integrieren lässt.
 
-Technisch läuft die Installation wie folgt ab. Packer startet das angepasste ISO Image und bootet die VM, das Skript wird dann automatisch im Hintergrund gestartet und in der Live Umgebung ausgeführt. Das Skript installiert im gemountetes Root Filesystem seine Pakete und konfiguriert mittels chroot die neue Umgebung. Nach Abschluss der Installation wird die Maschine kontrolliert heruntergefahren, sodass Packer das fertige Image weiterverarbeiten und als Vagrant Box exportieren kann.
+Technisch läuft die Installation wie folgt ab. Packer startet das angepasste ISO Image und bootet die VM, das **install.sh** Skript wird dann automatisch im Hintergrund über eine eigenen Systemd Datei gestartet und in der Live Umgebung ausgeführt. Das Skript installiert im gemounteten Root Filesystem seine Pakete und konfiguriert mittels chroot die neue Umgebung. Nach Abschluss der Installation wird die Maschine kontrolliert heruntergefahren, sodass Packer das fertige Image weiterverarbeiten und als Vagrant Box exportieren kann.
 
 ### ISO Image für den Import der install.sh vorbereiten
-Nachdem man sich das Manjaro ISO Imager heruntergeladen hat, muss man das ISO Image extrahieren um an das rootfs ranzukommen. In dieses rootfs kopieren wir dann unsere spätere **install.sh**.
+Nachdem man sich das Manjaro ISO Image heruntergeladen hat, muss man das ISO Image extrahieren um an das rootfs Filesystem ranzukommen. In dieses rootfs Filesystem kopieren wir dann unsere spätere **install.sh** Skript.
 
 ```bash
 ## Ordnerstruktur anlegen
@@ -34,7 +34,7 @@ ls -la manjaro-iso
 # .r--r--r-- 4.2M hth 28 Mar 00:23 efi.img
 # dr-xr-xr-x    - hth 28 Mar 00:23 manjaro
 
-## RootFS extrahieren - manjaro-iso/manjaro/x86_64/rootfs.sfs
+## RootFS Filesystem extrahieren - manjaro-iso/manjaro/x86_64/rootfs.sfs
 ##
 unsquashfs -d rootfs manjaro-iso/manjaro/x86_64/rootfs.sfs
 # Parallel unsquashfs: Using 12 processors
@@ -51,13 +51,14 @@ unsquashfs -d rootfs manjaro-iso/manjaro/x86_64/rootfs.sfs
 
 ### Meine install.sh - Experiment - ohne Gewähr!!
 Hier gabe es sehr viele Probleme im Live System, angefangen von der Zeitsynchronisation über unsignierte Paket Quellen, bis hin zu falschen Toolnamen. Die bei ArchLinux beschrieben wurden, aber in Manjaro anders heißen.
-Das war mein Ausgangspunkt und viele Stunden Debugging.
+Der Link war mein Ausgangspunkt und sehr viele Stunden debugging.
 https://wiki.archlinux.org/title/Installation_guide
 
-Debugging erfolgte in der VM über TTY3 (STRG+ALT+F3). Anmeldung am Live System ist möglich als Benutzer **manjaro/manjaro** oder als **root/manjaro**.
+Mein Debugging erfolgte in der VM über ein virtuelles Terminal (tty3) (STRG+ALT+F3). Anmeldung am Live System ist möglich, als Benutzer **manjaro/manjaro** oder als **root/manjaro**.
 
 ```bash
-## Logging nach Anmeldung im Live System verfolgen
+## Logging ansehen nach der Anmeldung im Live System
+## über ein virtuelles Terminal (tty3)
 tail -f /root/install.sh
 cat /root/install.sh | less
 
@@ -245,15 +246,15 @@ sudo mksquashfs rootfs manjaro-iso/manjaro/x86_64/rootfs.sfs -comp xz -noappend
 #   33.12% of uncompressed directory table size (2234165 bytes)
 # ...
 
-## Nachdem die rootfs.sfs geschrieben wurde, passt der MD5 Hash nicht mehr.
-## Dieser muss auch angepasst werden.
+## Nachdem die rootfs.sfs geschrieben wurde, passt der dazugehörige MD5 Hash "rootfs.md5" nicht mehr.
+## Dieser muss ebenfalls angepasst werden.
 ls -la manjaro-iso/manjaro/x86_64
 # ...
 # .r--r--r--   45 hth 28 Mar 00:39 rootfs.md5
 # .r--r--r-- 985M hth 12 Apr 15:34 rootfs.sfs
 
-## rootfs.md5 Datei muss editierbar gemacht werden
-## Der MD5 Hash wir neu erstellt und in die rootfs.md5 geschrieben.
+## rootfs.md5 Datei editierbar machen
+## Den MD5 Hash neu erstellt und in die rootfs.md5 schreiben.
 sudo chmod 0644 manjaro-iso/manjaro/x86_64/rootfs.md5
 
 cat manjaro-iso/manjaro/x86_64/rootfs.md5
@@ -273,7 +274,7 @@ ls -la manjaro-iso/manjaro/x86_64
 # .r--r--r--   45 hth 12 Apr 15:40 rootfs.md5
 # .r--r--r-- 985M hth 12 Apr 15:34 rootfs.sfs
 
-## Mein Custom Manjaro Linux ISO Image für Packer
+## Mein Custom Manjaro Linux ISO Image für spätere Vagrant Box
 xorriso -as mkisofs \
   -iso-level 3 \
   -o manjaro-gnome-26.0.4-260327-linux618-custom.iso \
@@ -308,8 +309,8 @@ xorriso -as mkisofs \
 
 ```bash
 cd packer/manjaro
-packer init ubuntu.pkr.hcl
-packer build ubuntu.pkr.hcl
+packer init manjaro.pkr.hcl
+packer build manjaro.pkr.hcl
 ```
 
 ### Vagrant Box initialisieren und starten
