@@ -5,14 +5,15 @@
     state: present
     update_cache: true
 
-- name: Check installed mhwd drivers
-  command: mhwd -li
-  register: mhwd_output
-  changed_when: false
+- name: Enable VBoxService
+  systemd:
+    name: vboxservice
+    enabled: true
+    state: started
 
-- name: Install VirtualBox video driver if missing
-  command: mhwd -a pci nonfree 0300
-  when: "'video-virtualbox' not in mhwd_output.stdout"
+- name: Ensure VBox modules loaded
+  command: modprobe vboxvideo
+  changed_when: false
 
 - name: Install matching VirtualBox host modules (best effort)
   pacman:

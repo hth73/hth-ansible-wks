@@ -1,4 +1,31 @@
 ---
+- name: Disable pacman sandbox (VirtualBox compatibility)
+  lineinfile:
+    path: /etc/pacman.conf
+    regexp: '^#?DisableSandbox'
+    line: 'DisableSandbox'
+
+- name: Initialize pacman keyring (first boot only)
+  command: pacman-key --init
+  args:
+    creates: /etc/pacman.d/gnupg/pubring.kbx
+  changed_when: false
+
+- name: Install latest keyrings
+  pacman:
+    name: "{{ keyring_packages }}"
+    state: present
+
+- name: Check if keyring initialized
+  stat:
+    path: /etc/pacman.d/gnupg/pubring.kbx
+  register: keyring_state
+
+- name: Populate keyring
+  command: pacman-key --populate archlinux manjaro
+  changed_when: false
+  when: not keyring_state.stat.exists
+
 - name: Pacman update + upgrade
   pacman:
     update_cache: true

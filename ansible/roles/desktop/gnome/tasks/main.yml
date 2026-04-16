@@ -1,1 +1,6 @@
 ---
+- name: Load vars (Arch only)
+  include_vars: "{{ ansible_facts['os_family'] | lower }}.yml"
+
+- name: Load OS tasks (Arch only)
+  include_tasks: "{{ ansible_facts['os_family'] | lower }}.yml"

@@ -23,18 +23,9 @@
 
 - name: Install build dependencies for VBox
   apt:
-    name:
-      - build-essential
-      - dkms
-      - linux-headers-{{ ansible_kernel }}
-      - perl
+    name: "{{ dependency_packages }}"
     state: present
     update_cache: true
-
-- name: Install VBox Guest Additions
-  command: sh /mnt/vbox/VBoxLinuxAdditions.run
-  args:
-    creates: /usr/sbin/VBoxService
 
 - name: Install VBox Guest Additions
   command: sh /mnt/vbox/VBoxLinuxAdditions.run
@@ -56,10 +47,9 @@
       service:
         name: "{{ item }}"
         state: stopped
-      loop:
-        - vboxadd-service
-        - vboxservice
+      loop: "{{ virtualbox_services }}"
       ignore_errors: true
+      
     - name: Unload VBox modules
       command: modprobe -r vboxsf vboxvideo vboxguest
       ignore_errors: true
@@ -67,9 +57,3 @@
 
 - name: Reboot
   reboot:
-
-# - name: Install VirtualBox guest packages (Debian)
-#   apt:
-#     name: "{{ virtualbox_guest_packages }}"
-#     state: present
-#     update_cache: true

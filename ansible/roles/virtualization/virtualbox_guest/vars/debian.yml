@@ -1,8 +1,10 @@
 ---
-virtualbox_guest_packages:
+dependency_packages:
   - build-essential
   - dkms
   - "linux-headers-{{ ansible_kernel }}"
-  - virtualbox-dkms
-  - virtualbox-guest-utils
-  - virtualbox-guest-x11
+  - perl
+
+virtualbox_services:
+  - vboxadd-service
+  - vboxservice

@@ -1,0 +1,18 @@
+---
+gnome_packages:
+  - gnome
+  - gnome-extra
+  - gdm
+
+gnome_additional_packages:
+  - gnome-shell-extensions
+  - gnome-browser-connector
+  - gnome-tweaks
+  - gnome-themes-extra
+  - seahorse
+  - noto-fonts
+  - noto-fonts-emoji
+
+gnome_settings:
+  - manjaro-gnome-settings
+  - manjaro-gnome-extension-settings

@@ -1,0 +1,32 @@
+---
+- name: Install GNOME base
+  pacman:
+    name: "{{ gnome_packages }}"
+    state: present
+
+- name: Install GNOME enhancements
+  pacman:
+    name: "{{ gnome_additional_packages }}"
+    state: present
+
+- name: Install Manjaro GNOME tweaks
+  pacman:
+    name: "{{ gnome_settings }}"
+    state: present
+
+- name: Disable Wayland (VirtualBox compatibility)
+  lineinfile:
+    path: /etc/gdm/custom.conf
+    regexp: '^#?WaylandEnable='
+    line: 'WaylandEnable=false'
+
+- name: Ensure GDM is enabled and running
+  systemd:
+    name: gdm
+    enabled: true
+    state: started
+
+- name: Check systemd default target symlink
+  stat:
+    path: /etc/systemd/system/default.target
+  register: default_target_link

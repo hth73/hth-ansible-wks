@@ -5,3 +5,4 @@
     - base
     - virtualization/virtualbox_guest
     - tools
+    - desktop/gnome
