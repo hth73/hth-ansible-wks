@@ -1,4 +1,4 @@
-# Manjaro Packer Build und Vagrant start
+# Manjaro Packer Build and Vagrant Startup
 
 <img src="https://img.shields.io/badge/Manjaro-00bfa5?logo=manjaro&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/virtualbox-033467?logo=virtualbox&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Packer-00affb?logo=packer&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Vagrant-0e6aec?logo=vagrant&logoColor=white&style=flat" />
 
@@ -7,24 +7,34 @@
 [Back to home](../../README.md)
 
 ---
-### Manjaro Packer Build vorbereiten
+### Prepare Manjaro Packer Build
 
-Das Manjaro Live Image wurde mit einem eigenen **install.sh** Skript ausgestattet, um eine vollständig automatisierte Basisinstallation zu ermöglichen. Ziel war es, den manuellen Installationsprozess so zu verändern, damit sich dieser in dem Packer-Build integrieren lässt.
+The Manjaro live image was extended with a custom `install.sh` script to enable a fully automated base installation.  
+The goal was to adapt the manual installation process so it can be integrated into a Packer build workflow.
 
-Technisch läuft die Installation wie folgt ab. Packer startet das angepasste ISO Image und bootet die VM, das **install.sh** Skript wird dann automatisch im Hintergrund über eine eigenen Systemd Datei gestartet und in der Live Umgebung ausgeführt. Das Skript installiert im gemounteten Root Filesystem seine Pakete und konfiguriert mittels chroot die neue Umgebung. Nach Abschluss der Installation wird die Maschine kontrolliert heruntergefahren, sodass Packer das fertige Image weiterverarbeiten und als Vagrant Box exportieren kann.
+Technically, the installation works as follows:  
+Packer boots the customized ISO image and starts the VM. The `install.sh` script is automatically executed in the background via a dedicated systemd service and runs inside the live environment.
 
-### ISO Image für den Import der install.sh vorbereiten
-Nachdem man sich das Manjaro ISO Image heruntergeladen hat, muss man das ISO Image extrahieren um an das rootfs Filesystem ranzukommen. In dieses rootfs Filesystem kopieren wir dann unsere spätere **install.sh** Skript.
+The script installs packages into the mounted root filesystem and configures the system using `chroot`.  
+After the installation is complete, the machine is cleanly shut down, allowing Packer to process the finished image and export it as a Vagrant box.
+
+---
+
+### Prepare ISO Image for `install.sh` integration
+After downloading the Manjaro ISO image, it must be extracted to access the root filesystem.  
+The `install.sh` script will then be copied into this root filesystem.
 
 ```bash
-## Ordnerstruktur anlegen
+## Create directory structure
+##
 cd ~/vbox
 mkdir -p manjaro-iso rootfs
 
-## ISO Image extrahieren
+## Install required tools
+##
 sudo apt install libarchive-tools xorriso -y
 
-## manjaro-gnome-26.0.4-260327-linux618.iso extrahieren
+## Extract manjaro ISO
 ##
 bsdtar -C manjaro-iso -xf manjaro-gnome-26.0.4-260327-linux618.iso
 
@@ -34,7 +44,7 @@ ls -la manjaro-iso
 # .r--r--r-- 4.2M hth 28 Mar 00:23 efi.img
 # dr-xr-xr-x    - hth 28 Mar 00:23 manjaro
 
-## RootFS Filesystem extrahieren - manjaro-iso/manjaro/x86_64/rootfs.sfs
+## Extract root filesystem - manjaro-iso/manjaro/x86_64/rootfs.sfs
 ##
 unsquashfs -d rootfs manjaro-iso/manjaro/x86_64/rootfs.sfs
 # Parallel unsquashfs: Using 12 processors
@@ -49,21 +59,19 @@ unsquashfs -d rootfs manjaro-iso/manjaro/x86_64/rootfs.sfs
 # created 5065 hardlinks
 ```
 
-### Meine install.sh - Experiment - ohne Gewähr!!
-Hier gabe es sehr viele Probleme im Live System, angefangen von der Zeitsynchronisation über unsignierte Paket Quellen, bis hin zu falschen Toolnamen. Die bei ArchLinux beschrieben wurden, aber in Manjaro anders heißen.
-Der Link war mein Ausgangspunkt und sehr viele Stunden debugging.
-https://wiki.archlinux.org/title/Installation_guide
-
-Mein Debugging erfolgte in der VM über ein virtuelles Terminal (tty3) (STRG+ALT+F3). Anmeldung am Live System ist möglich, als Benutzer **manjaro/manjaro** oder als **root/manjaro**.
+### install.sh Script (Experimental – No Warranty)
+There were multiple issues in the live environment, ranging from time synchronization problems to unsigned package sources and differences in tool naming compared to Arch Linux.
+The Arch Linux installation guide was used as a reference and required extensive debugging: https://wiki.archlinux.org/title/Installation_guide
+Debugging was performed inside the VM using a virtual terminal (tty3) (CTRL+ALT+F3).
+Login to the live system is possible with manjaro/manjaro or root/manjaro.
 
 ```bash
-## Logging ansehen nach der Anmeldung im Live System
-## über ein virtuelles Terminal (tty3)
+## View logs after logging into the live system
 tail -f /root/install.sh
 cat /root/install.sh | less
 
-## Wenn Packer die Vagrant Box erstellt hat, 
-## findet man auch die Log Datei im fertigen Image.
+## After Packer creates the Vagrant box,
+## the log file is also available in the final image
 sudo cat /root/install.log | less
 ```
 
@@ -185,17 +193,17 @@ echo "===> INSTALL DONE"
 poweroff
 ```
 
-### Skript in das RootFS kopieren und ISO Image erstellen
+### Copy Script into RootFS and Rebuild ISO
 
 ```bash
-## install.sh kopieren und berechtigen
+## Copy install.sh and make executable
 cp install.sh rootfs/usr/local/bin/install.sh
 chmod +x rootfs/usr/local/bin/install.sh
 
 ls -la rootfs/usr/local/bin/install.sh
 # .rwxrwxr-x 1.5k hth 12 Apr 15:26 rootfs/usr/local/bin/install.sh
 
-## Systemd Datei erstellen damit diese nach dem booten ausgeführt wird
+## Create systemd service
 vi rootfs/etc/systemd/system/install.service
 
 # ---
@@ -221,14 +229,14 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 # ---
 
-## Systemd Datei in multi-user.target.wants verlinken
+## Enable service
 ln -s /etc/systemd/system/install.service rootfs/etc/systemd/system/multi-user.target.wants/install.service
 
 ls -la rootfs/etc/systemd/system/multi-user.target.wants                                                   
 # lrwxrwxrwx - hth 12 Apr 15:32 install.service -> /etc/systemd/system/install.service
 # ...
 
-## neue rootfs.sfs Datei schreiben
+## Rebuild rootfs.sfs
 sudo mksquashfs rootfs manjaro-iso/manjaro/x86_64/rootfs.sfs -comp xz -noappend
 
 # Parallel mksquashfs: Using 12 processors
@@ -253,8 +261,7 @@ ls -la manjaro-iso/manjaro/x86_64
 # .r--r--r--   45 hth 28 Mar 00:39 rootfs.md5
 # .r--r--r-- 985M hth 12 Apr 15:34 rootfs.sfs
 
-## rootfs.md5 Datei editierbar machen
-## Den MD5 Hash neu erstellt und in die rootfs.md5 schreiben.
+## Update rootfs.md5 checksum
 sudo chmod 0644 manjaro-iso/manjaro/x86_64/rootfs.md5
 
 cat manjaro-iso/manjaro/x86_64/rootfs.md5
@@ -274,7 +281,7 @@ ls -la manjaro-iso/manjaro/x86_64
 # .r--r--r--   45 hth 12 Apr 15:40 rootfs.md5
 # .r--r--r-- 985M hth 12 Apr 15:34 rootfs.sfs
 
-## Mein Custom Manjaro Linux ISO Image für spätere Vagrant Box
+## Build custom ISO image
 xorriso -as mkisofs \
   -iso-level 3 \
   -o manjaro-gnome-26.0.4-260327-linux618-custom.iso \
@@ -305,7 +312,7 @@ xorriso -as mkisofs \
 # Writing to 'stdio:manjaro-custom.iso' completed successfully.
 ```
 
-### Packer build initialisieren und starten
+### Initialize and Run Packer Build
 
 ```bash
 cd packer/manjaro
@@ -313,10 +320,10 @@ packer init manjaro.pkr.hcl
 packer build manjaro.pkr.hcl
 ```
 
-### Vagrant Box initialisieren und starten
+### Initialize and Start Vagrant Box
 
 ```bash
-## Manjaro VM starten
+## Start Manjaro VM
 cd ../vagrant/manjaro
 vagrant box add ../../packer/manjaro/manjaro-client.box --name manjaro-client --force
 vagrant up

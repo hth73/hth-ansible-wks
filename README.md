@@ -1,30 +1,30 @@
-# Ubuntu/Manjaro Linux Unattended Installation mit Packer, Vagrant und Ansible
+# Ubuntu/Manjaro Linux Unattended Installation with Packer, Vagrant and Ansible
 
 <img src="https://img.shields.io/badge/Ubuntu-f24e20?logo=ubuntu&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Manjaro-00bfa5?logo=manjaro&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/virtualbox-033467?logo=virtualbox&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Packer-00affb?logo=packer&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Ansible-d5000e?logo=ansible&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Vagrant-0e6aec?logo=vagrant&logoColor=white&style=flat" />
 
 ---
-## Beschreibung
+## Description
 
-Dieses kleine Projekt automatisiert mir meine Ubuntu- und (zukünftig) Manjaro-Desktop-VMs in VirtualBox.<br>
-Ziel ist es, schnell reproduzierbare Linux-Testmaschinen bereitzustellen, ohne manuelle Installation und Konfiguration.
+This project automates the creation of my Ubuntu and Manjaro desktop VMs in VirtualBox.<br>
+The goal is to quickly provide reproducible Linux test environments without manual installation and configuration.
 
-Der Aufbau erfolgt in drei Schritten:
+The setup is divided into three stages:
 1. **Packer (Image Build)**
-   - Verwendet ein Ubuntu/Manjaro ISO (lokal oder remote)
-   - Führt eine unbeaufsichtigte Installation (autoinstall/cloud-init) durch
-   - Erstellt daraus ein minimales, wiederverwendbares Vagrant Base Image
+   - Uses an Ubuntu/Manjaro ISO (local or remote)
+   - Performs an unattended installation (autoinstall/cloud-init)
+   - Builds a minimal, reusable Vagrant base image
 2. **Vagrant (VM Lifecycle)**
-   - Startet eine VM basierend auf dem erzeugten Base Image
-   - Kümmert sich um Netzwerk, Ressourcen und SSH-Zugriff
-   - Stellt eine reproduzierbare Laufzeitumgebung bereit
+   - Starts a VM based on the generated base image
+   - Manages networking, resources, and SSH access
+   - Provides a reproducible runtime environment
 3. **Ansible (Provisioning)**
-   - Konfiguriert die VM nach dem Start
-   - Installiert Pakete und Anwendungen
-   - Wendet systemweite Konfigurationen über Rollen an (z. B. base, apps, desktop)
+   - Configures the VM after startup
+   - Installs packages and applications
+   - Applies system-wide configuration using roles (e.g. base, apps, desktop)
 
 ---
 
-### Inhaltsverzeichnis
+### Table of Contents
 
-* [Ubuntu Packer Build und Vagrant start](packer/ubuntu/README.md)
-* [Manjaro Packer Build und Vagrant start](packer/manjaro/README.md)
+* [Ubuntu Packer Build and Vagrant Startup](packer/ubuntu/README.md)
+* [Manjaro Packer Build and Vagrant Startup](packer/manjaro/README.md)

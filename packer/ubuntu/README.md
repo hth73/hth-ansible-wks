@@ -1,4 +1,4 @@
-# Ubuntu Packer Build und Vagrant start
+# Ubuntu Packer Build and Vagrant Startup
 
 <img src="https://img.shields.io/badge/Ubuntu-f24e20?logo=ubuntu&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/virtualbox-033467?logo=virtualbox&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Packer-00affb?logo=packer&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Vagrant-0e6aec?logo=vagrant&logoColor=white&style=flat" />
 
@@ -7,11 +7,19 @@
 [Back to home](../../README.md)
 
 ---
-### Packer Build vorbereiten und starten
+### Prepare and Run Packer Build
 
-Nach dem Start von **packer build** wird automatisch eine VirtualBox-VM erstellt und mit dem angegebenen Ubuntu-ISO gebootet. Die Installation erfolgt unbeaufsichtigt anhand der Konfiguration in **http/user-data** (Autoinstall/cloud-init). Während der Installation wird ein Benutzer/Passwort "vagrant" angelegt (inkl. SSH-Zugriff).<br>Nach erfolgreichem Build wird die VM heruntergefahren und von Packer exportiert. Der Export befindet sich im Verzeichnis **packer/ubuntu/output-ubuntu**.<br>Im Anschluss wird aus diesem Export automatisch eine Vagrant-Box erstellt. Diese liegt unter **packer/ubuntu/ubuntu-base.box** und dient als Basis für spätere Vagrant-VMs.
+After starting `packer build`, a VirtualBox VM is automatically created and booted using the specified Ubuntu ISO.  
+The installation is performed unattended based on the configuration in `http/user-data` (Autoinstall/cloud-init).
 
-### Ubuntu Image download
+During installation, a user with the username/password `vagrant` is created (including SSH access).  
+After a successful build, the VM is shut down and exported by Packer.
+
+The export is located in the directory `packer/ubuntu/output-ubuntu`.  
+Afterwards, a Vagrant box is automatically created from this export.  
+It is stored at `packer/ubuntu/ubuntu-base.box` and serves as the base image for subsequent Vagrant VMs.
+
+### Download Ubuntu Image
 
 ```bash
 #!/usr/bin/env bash
@@ -25,10 +33,10 @@ ISO_URL="$BASE_URL/$LATEST/ubuntu-$LATEST-desktop-amd64.iso"
 wget -O "${HOME}/vbox/images/ubuntu-${LATEST}-desktop-amd64.iso" "${ISO_URL}"
 ```
 
-### SSH Key Pair in packer/ubuntu/http/user-data hinzufügen
+### Add SSH Key Pair to packer/ubuntu/http/user-data
 
 ```bash
-## SSH Key Pair ohne Passphrase anlegen
+## Generate SSH key pair without passphrase
 ##
 [[ -d "vagrant/keys" ]] || mkdir "vagrant/keys"
 ssh-keygen -o -t ed25519 -f vagrant/keys/id_ed25519 -C'spox@vagrant-dev'
@@ -38,7 +46,7 @@ ssh-keygen -o -t ed25519 -f vagrant/keys/id_ed25519 -C'spox@vagrant-dev'
 cat vagrant/keys/id_ed25519.pub
 vi packer/ubuntu/http/user-data
 
-## SSH Key in packer/ubuntu/http/user-data hinzufügen
+## Add SSH key to packer/ubuntu/http/user-data
 ##
 # ssh:
 #   install-server: true
@@ -47,7 +55,7 @@ vi packer/ubuntu/http/user-data
 #     - ssh-ed25519 AAAA...FYlT spox@vagrant-dev
 ```
 
-### Packer build initialisieren und starten
+### Initialize and Run Packer Build
 
 ```bash
 cd packer/ubuntu
@@ -55,7 +63,7 @@ packer init ubuntu.pkr.hcl
 packer build ubuntu.pkr.hcl
 ```
 
-### Vagrant Box initialisieren und starten
+### Initialize and Start Vagrant Box
 
 ```bash
 ## Ubuntu VM starten
