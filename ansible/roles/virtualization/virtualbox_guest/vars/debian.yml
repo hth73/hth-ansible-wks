@@ -4,7 +4,3 @@ dependency_packages:
   - dkms
   - "linux-headers-{{ ansible_kernel }}"
   - perl
-
-virtualbox_services:
-  - vboxadd-service
-  - vboxservice

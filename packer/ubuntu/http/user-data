@@ -30,6 +30,5 @@ autoinstall:
     - python3
 
   late-commands:
-    - curtin in-target --target=/target -- chmod 0440 /etc/sudoers.d/90-cloud-init-users || true
     - curtin in-target --target=/target -- bash -c 'echo "vagrant ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/vagrant'
     - curtin in-target --target=/target -- chmod 440 /etc/sudoers.d/vagrant

@@ -41,19 +41,15 @@
     path: /mnt/vbox
     state: unmounted
 
-- name: Prepare VBox for reboot
-  block:
-    - name: Stop VBox services
-      service:
-        name: "{{ item }}"
-        state: stopped
-      loop: "{{ virtualbox_services }}"
-      ignore_errors: true
-      
-    - name: Unload VBox modules
-      command: modprobe -r vboxsf vboxvideo vboxguest
-      ignore_errors: true
-  when: ansible_facts['virtualization_type'] == "virtualbox"
+- name: Stop VBox services (Debian)
+  service:
+    name: vboxadd-service
+    state: stopped
+  when:
+    - ansible_facts['os_family'] == "Debian"
+    - vbox_install is changed
+  ignore_errors: true
 
-- name: Reboot
+- name: Reboot only if VBox was installed
   reboot:
+  when: vbox_install is changed

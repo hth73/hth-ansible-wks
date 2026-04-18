@@ -1,0 +1,10 @@
+---
+- name: Add the users with a bash shell, appending the group 'sudo' to the user's groups
+  user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    shell: "{{ item.shell }}"
+    create_home: yes
+    groups: "{{ item.groups }}"
+    append: yes
+  loop: "{{ users }}"

@@ -1,8 +1,12 @@
 - hosts: all
   become: true
+  vars:
+    sops_users: "{{ lookup('community.sops.sops', '../secrets/users.sops.yml') | from_yaml }}"
+    users: "{{ sops_users.users }}"
 
   roles:
     - base
+    - users
     - virtualization/virtualbox_guest
     - tools
     - desktop/gnome
