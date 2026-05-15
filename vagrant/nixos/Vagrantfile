@@ -1,0 +1,41 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "nixos-base"
+  config.vm.hostname = nil
+
+  config.ssh.username = "root"
+  config.ssh.password = "vagrant"
+  config.ssh.insert_key = false
+
+  config.ssh.private_key_path = [
+    File.expand_path("~/.vagrant.d/insecure_private_key"),
+    File.join(__dir__, "../keys/id_ed25519")
+  ]
+
+  # NixOS installiert die VirtualBox Guest AddOns
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  # NixOS verwaltet /etc/fstab
+  config.vm.allow_fstab_modification = false
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 4096
+    vb.cpus = 2
+    #vb.customize ["modifyvm", :id, "--firmware", "efi"]
+    vb.customize ["modifyvm", :id, "--graphicscontroller", "vmsvga"]
+    vb.customize ["modifyvm", :id, "--vram", "128"]
+    vb.customize ["modifyvm", :id, "--accelerate3d", "on"]
+    vb.customize ["modifyvm", :id, "--ioapic", "on"]
+  end
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook    = "../../ansible/playbooks/nixos.yml"
+    ansible.config_file = "../../ansible/ansible.cfg"
+    ansible.become      = false
+
+    ansible.extra_vars = {
+      ansible_user: "root",
+      ansible_password: "vagrant",
+      ansible_become: false,
+    }
+  end
+end

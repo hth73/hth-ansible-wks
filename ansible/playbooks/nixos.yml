@@ -1,0 +1,53 @@
+---
+- hosts: all
+  become: true
+
+  vars:
+    deploy_key_content: "{{ lookup('file', playbook_dir + '/../secrets/id_ed25519') }}"
+    repo_url: git+ssh://git@github-deploy/hth73/hth-nixos.git
+    flake_host: mynixos
+
+  tasks:
+    - name: Create /root/.ssh
+      file:
+        path: /root/.ssh
+        state: directory
+        mode: '0700'
+
+    - name: Copy deploy key to root
+      copy:
+        dest: /root/.ssh/id_ed25519
+        content: "{{ deploy_key_content ~ '\n' }}"
+        owner: root
+        group: root
+        mode: '0600'
+        remote_src: true
+
+    - name: Validate private key
+      command: ssh-keygen -y -f /root/.ssh/id_ed25519
+      changed_when: false
+
+    - name: Configure SSH for root
+      copy:
+        dest: /root/.ssh/config
+        owner: root
+        group: root
+        mode: '0600'
+        content: |
+          Host github-deploy
+            HostName github.com
+            User git
+            IdentityFile /root/.ssh/id_ed25519
+            IdentitiesOnly yes
+            StrictHostKeyChecking accept-new
+
+    - name: Apply NixOS flake
+      command:
+        argv:
+          - nixos-rebuild
+          - switch
+          - --flake
+          - "{{ repo_url }}#{{ flake_host }}"
+      register: rebuild_result
+      ignore_unreachable: true
+      ignore_errors: true
