@@ -51,3 +51,7 @@
       register: rebuild_result
       ignore_unreachable: true
       ignore_errors: true
+
+    - name: Trigger final reboot
+      raw: nohup systemctl reboot >/dev/null 2>&1 &
+      ignore_errors: true
