@@ -14,7 +14,6 @@
 # Download and install Butane
 # --------------------------------------------------
 sudo wget -O /usr/local/bin/butane https://github.com/coreos/butane/releases/download/v0.27.0/butane-x86_64-unknown-linux-gnu
-
 sudo chmod +x /usr/local/bin/butane
 
 butane --version
@@ -23,15 +22,16 @@ butane --version
 # --------------------------------------------------
 # Convert Ignition file
 # --------------------------------------------------
+cd packer/fedora-coreos/config
 butane --pretty --strict ansible_config.bu > ansible_config.ign
 
 # --------------------------------------------------
 # Create an ignition hash and use it in Packer
 # --------------------------------------------------
-sha256sum config/ansible_config.ign
+sha256sum ansible_config.ign
 # e165f1d79deacfc4..........
 # or
-sha512sum config/ansible_config.ign
+sha512sum ansible_config.ign
 # 9c4f683ab01ca78f..........
 ```
 ```yaml
@@ -48,6 +48,7 @@ variable "ignition_file" {
 variable "ignition_hash" {
   type    = string
   default = "sha256-e165f1d79deacfc4.........."
+  # default = "sha512-9c4f683ab01ca78f.........."
 }
 
 source "virtualbox-iso" "coreos" {
