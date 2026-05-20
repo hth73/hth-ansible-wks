@@ -20,7 +20,7 @@ variable "iso_path" {
 
 source "virtualbox-iso" "ubuntu" {
   iso_url                = var.iso_path
-  iso_checksum           = "sha256:3a4c9877b483ab46d7c3fbe165a0db275e1ae3cfe56a5657e5a47c2f99a99d1e" # sha256sum ../ubuntu-24.04.4-desktop-amd64.iso
+  iso_checksum           = ""
 
   vm_name                = "ubuntu-client"
   guest_os_type          = "Ubuntu_64"

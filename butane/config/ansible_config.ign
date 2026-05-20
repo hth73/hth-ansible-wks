@@ -1,0 +1,67 @@
+{
+  "ignition": {
+    "version": "3.5.0"
+  },
+  "passwd": {
+    "users": [
+      {
+        "name": "core",
+        "sshAuthorizedKeys": [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICn/bnaOdeE/cZaqbDXVP9q96Rj5gs878+9806K0UK2L",
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJVpcUidKX5g1Ydq4HW3H560hVzVD5pEHbM8zHHwFYlT"
+        ]
+      },
+      {
+        "groups": [
+          "wheel"
+        ],
+        "homeDir": "/home/hth",
+        "name": "hth",
+        "noCreateHome": false,
+        "passwordHash": "$y$j9T$xtFqbXNWo4Q7ye693r6OG0$3hG8X61jMRQICFMnByai1BKfaHv1B/n3MdxNUf72GR/",
+        "sshAuthorizedKeys": [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICn/bnaOdeE/cZaqbDXVP9q96Rj5gs878+9806K0UK2L"
+        ],
+        "shell": "/bin/bash"
+      }
+    ]
+  },
+  "storage": {
+    "files": [
+      {
+        "overwrite": true,
+        "path": "/etc/hostname",
+        "contents": {
+          "compression": "",
+          "source": "data:,mycoreos"
+        },
+        "mode": 420
+      },
+      {
+        "overwrite": true,
+        "path": "/etc/vconsole.conf",
+        "contents": {
+          "compression": "",
+          "source": "data:,KEYMAP%3Dde"
+        },
+        "mode": 420
+      },
+      {
+        "overwrite": true,
+        "path": "/etc/profile.d/systemd-pager.sh",
+        "contents": {
+          "compression": "",
+          "source": "data:,export%20SYSTEMD_PAGER%3Dcat%0A"
+        },
+        "mode": 420
+      }
+    ],
+    "links": [
+      {
+        "overwrite": true,
+        "path": "/etc/localtime",
+        "target": "../usr/share/zoneinfo/Europe/Berlin"
+      }
+    ]
+  }
+}

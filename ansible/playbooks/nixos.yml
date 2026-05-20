@@ -3,7 +3,7 @@
   become: true
 
   vars:
-    deploy_key_content: "{{ lookup('file', playbook_dir + '/../secrets/id_ed25519') }}"
+    deploy_key_content: "{{ lookup('file', playbook_dir + '/../../secrets/ssh/id_ed25519') }}"
     repo_url: git+ssh://git@github-deploy/hth73/hth-nixos.git
     flake_host: mynixos
 

@@ -1,0 +1,54 @@
+# Fedora CoreOS Ansible Butane configuration
+# Date: 2026-05-20
+
+variant: fcos
+version: 1.6.0
+
+passwd:
+  users:
+    # Default User core
+    - name: core
+      ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICn/bnaOdeE/cZaqbDXVP9q96Rj5gs878+9806K0UK2L
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJVpcUidKX5g1Ydq4HW3H560hVzVD5pEHbM8zHHwFYlT
+
+    # User HTH
+    - name: hth
+      ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICn/bnaOdeE/cZaqbDXVP9q96Rj5gs878+9806K0UK2L
+      password_hash: $y$j9T$xtFqbXNWo4Q7ye693r6OG0$3hG8X61jMRQICFMnByai1BKfaHv1B/n3MdxNUf72GR/
+      home_dir: /home/hth
+      no_create_home: false
+      groups:
+        - wheel
+      shell: /bin/bash
+
+storage:
+  files:
+    # Hostname setzen
+    - path: /etc/hostname
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: mycoreos
+
+    # Deutsche Tastatur
+    - path: /etc/vconsole.conf
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: KEYMAP=de
+
+    # Systemd ohne Pager
+    - path: /etc/profile.d/systemd-pager.sh
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          export SYSTEMD_PAGER=cat
+
+  links:
+    # Zeitzone
+    - path: /etc/localtime
+      overwrite: true
+      target: ../usr/share/zoneinfo/Europe/Berlin
