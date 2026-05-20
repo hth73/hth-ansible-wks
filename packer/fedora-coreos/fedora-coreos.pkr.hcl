@@ -18,9 +18,14 @@ variable "iso_path" {
   default = "file:///home/hth/vbox/images/fedora-coreos-44.20260419.3.1-live-iso.x86_64.iso"
 }
 
-variable "ignition_url" {
+variable "ignition_file" {
   type    = string
-  default = "https://raw.githubusercontent.com/hth73/hth-coreos/refs/heads/main/config.ign"
+  default = "config/ansible_config.ign"
+}
+
+variable "ignition_hash" {
+  type    = string
+  default = "sha256-e165f1d79deacfc4153bded6765ca65d321439e3e9a9b504c059c82b99de366b"
 }
 
 variable "ssh_private_key_file" {
@@ -38,6 +43,8 @@ source "virtualbox-iso" "coreos" {
   disk_size = 20480
   memory    = 4096
   cpus      = 2
+
+  http_directory = "."
 
   communicator           = "ssh"
   ssh_username           = "core"
@@ -57,12 +64,11 @@ source "virtualbox-iso" "coreos" {
   boot_command = [
     "<enter>",
     "<wait30s>",
-    "sudo coreos-installer install /dev/sda --ignition-url ${var.ignition_url}",
+    "sudo coreos-installer install /dev/sda --ignition-hash '${var.ignition_hash}' --ignition-url 'http://{{ .HTTPIP }}:{{ .HTTPPort }}/${var.ignition_file}'",
     "<enter>",
-    "<wait3m>",
+    "<wait5m>",
     "sudo reboot",
-    "<enter>",
-    "<wait5m>"
+    "<enter>"
   ]
   shutdown_command = "sudo systemctl poweroff"
 }
@@ -71,7 +77,7 @@ build {
   sources = ["source.virtualbox-iso.coreos"]
 
   post-processor "vagrant" {
-    output              = "coreos-client.box"
+    output              = "fedora-coreos-base.box"
     keep_input_artifact = false
   }
 }
