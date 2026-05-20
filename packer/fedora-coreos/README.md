@@ -9,7 +9,7 @@
 ---
 ### Prepare Fedora CoreOS Packer Build
 
-AAfter running `packer build`, a VirtualBox VM is automatically created and booted using the specified Fedora CoreOS ISO image.
+After running `packer build`, a VirtualBox VM is automatically created and booted using the specified Fedora CoreOS ISO image.
 The installation is performed unattended using the Ignition configuration file `config/ansible_config.ign`, which is generated from the Butane configuration file `config/ansible_config.bu`.
 During installation, the users `core` and `hth` are created and configured with SSH access.
 After the installation is complete, the VM is shut down and exported by Packer.
