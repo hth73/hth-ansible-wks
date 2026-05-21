@@ -33,7 +33,7 @@
         "path": "/etc/hostname",
         "contents": {
           "compression": "",
-          "source": "data:,mycoreos"
+          "source": "data:,coreos-base"
         },
         "mode": 420
       },

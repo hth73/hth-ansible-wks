@@ -30,5 +30,5 @@ The setup is divided into three stages:
 * [Ubuntu Packer Build and Vagrant Startup](packer/ubuntu/README.md)
 * [Manjaro Packer Build and Vagrant Startup](packer/manjaro/README.md)
 * [NixOS Vagrant Startup](vagrant/nixos/README.md)
-* [CoreOS Packer Build and Vagrant Startup](packer/fedora-coreos/README.md)
+* [CoreOS Packer Build and Vagrant Startup](packer/coreos/README.md)
 * [The Ansible Playbook and Roles Section](ansible/README.md)

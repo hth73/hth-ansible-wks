@@ -22,14 +22,14 @@ butane --version
 # --------------------------------------------------
 # Convert Ignition file
 # --------------------------------------------------
-cd packer/fedora-coreos/config
+cd packer/coreos/config
 butane --pretty --strict ansible_config.bu > ansible_config.ign
 
 # --------------------------------------------------
 # Create an ignition hash and use it in Packer
 # --------------------------------------------------
 sha256sum ansible_config.ign
-# e165f1d79deacfc4..........
+# 3834f44c52b0b80e..........
 # or
 sha512sum ansible_config.ign
 # 9c4f683ab01ca78f..........
@@ -47,7 +47,7 @@ variable "ignition_file" {
 
 variable "ignition_hash" {
   type    = string
-  default = "sha256-e165f1d79deacfc4.........."
+  default = "sha256-3834f44c52b0b80e.........."
   # default = "sha512-9c4f683ab01ca78f.........."
 }
 

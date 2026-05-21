@@ -25,7 +25,7 @@ variable "ignition_file" {
 
 variable "ignition_hash" {
   type    = string
-  default = "sha256-e165f1d79deacfc4153bded6765ca65d321439e3e9a9b504c059c82b99de366b"
+  default = "sha256-3834f44c52b0b80ea9b3af9b47dd7a4afe4d65c32165a053fca1310e3179383c"
 }
 
 variable "ssh_private_key_file" {
@@ -37,7 +37,7 @@ source "virtualbox-iso" "coreos" {
   iso_url      = var.iso_path
   iso_checksum = "none"
 
-  vm_name       = "coreos-client"
+  vm_name       = "coreos-base"
   guest_os_type = "Fedora_64"
 
   disk_size = 20480
@@ -77,7 +77,7 @@ build {
   sources = ["source.virtualbox-iso.coreos"]
 
   post-processor "vagrant" {
-    output              = "fedora-coreos-base.box"
+    output              = "coreos-base.box"
     keep_input_artifact = false
   }
 }

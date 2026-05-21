@@ -6,7 +6,7 @@ autoinstall:
     id: ubuntu-desktop
 
   identity:
-    hostname: ubuntu-client
+    hostname: ubuntu-base
     username: vagrant
     password: "$6$pjTmy9AUbDZgp9Es$NIJcQKoiW93K/p9MuShvd1aorK1fq7L.tQQQDT3wiLNjM6p6.3y1T9ActGwwbKtdEnhNorRVLgOH6toWtGpH21" # openssl passwd -6 vagrant
 

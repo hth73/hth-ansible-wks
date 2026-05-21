@@ -67,7 +67,7 @@ set -euxo pipefail
 echo "===> START CHROOT CONFIG"
 
 echo "===> SET HOSTNAME"
-echo "manjaro-client" > /etc/hostname
+echo "manjaro-base" > /etc/hostname
 
 echo "===> SET LOCALE"
 sed -i "s/^#en_US.UTF-8/en_US.UTF-8/" /etc/locale.gen

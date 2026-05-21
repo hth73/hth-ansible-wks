@@ -67,8 +67,8 @@ Login to the live system is possible with manjaro/manjaro or root/manjaro.
 
 ```bash
 ## View logs after logging into the live system
-tail -f /root/install.sh
-cat /root/install.sh | less
+tail -f /root/install.log
+cat /root/install.log | less
 
 ## After Packer creates the Vagrant box,
 ## the log file is also available in the final image
@@ -145,7 +145,7 @@ set -euxo pipefail
 echo "===> START CHROOT CONFIG"
 
 echo "===> SET HOSTNAME"
-echo "manjaro-client" > /etc/hostname
+echo "manjaro-base" > /etc/hostname
 
 echo "===> SET LOCALE"
 sed -i "s/^#en_US.UTF-8/en_US.UTF-8/" /etc/locale.gen
@@ -317,6 +317,7 @@ xorriso -as mkisofs \
 ```bash
 cd packer/manjaro
 packer init manjaro.pkr.hcl
+packer validate manjaro.pkr.hcl
 packer build manjaro.pkr.hcl
 ```
 
@@ -325,6 +326,6 @@ packer build manjaro.pkr.hcl
 ```bash
 ## Start Manjaro VM
 cd ../vagrant/manjaro
-vagrant box add ../../packer/manjaro/manjaro-client.box --name manjaro-client --force
+vagrant box add ../../packer/manjaro/manjaro-base.box --name manjaro-base --force
 vagrant up
 ```

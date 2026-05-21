@@ -30,7 +30,7 @@ storage:
       mode: 0644
       overwrite: true
       contents:
-        inline: mycoreos
+        inline: coreos-base
 
     # Deutsche Tastatur
     - path: /etc/vconsole.conf

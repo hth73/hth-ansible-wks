@@ -1,2 +1,2 @@
-instance-id: ubuntu-client
-local-hostname: ubuntu-client
+instance-id: ubuntu-base
+local-hostname: ubuntu-base

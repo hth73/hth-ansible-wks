@@ -59,7 +59,11 @@ vi packer/ubuntu/http/user-data
 
 ```bash
 cd packer/ubuntu
+sha256sum ~/vbox/images/ubuntu-24.04.4-desktop-amd64.iso
+# iso_checksum = "sha256:3a4c9877b483....."
+
 packer init ubuntu.pkr.hcl
+packer validate ubuntu.pkr.hcl
 packer build ubuntu.pkr.hcl
 ```
 
@@ -68,6 +72,6 @@ packer build ubuntu.pkr.hcl
 ```bash
 ## Ubuntu VM starten
 cd ../vagrant/ubuntu
-vagrant box add ../../packer/ubuntu/ubuntu-client.box --name ubuntu-client --force
+vagrant box add ../../packer/ubuntu/ubuntu-base.box --name ubuntu-base --force
 vagrant up
 ```

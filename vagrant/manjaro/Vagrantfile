@@ -1,6 +1,6 @@
 Vagrant.configure("2") do |config|
-  config.vm.box               = "manjaro-client"
-  config.vm.hostname          = "manjaro-client"
+  config.vm.box               = "manjaro-base"
+  config.vm.hostname          = "manjaro-base"
   config.ssh.private_key_path = File.join(__dir__, "../../secrets/ssh/id_ed25519")
   config.ssh.insert_key       = false
 

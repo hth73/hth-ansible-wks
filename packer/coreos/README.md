@@ -13,7 +13,7 @@ After running `packer build`, a VirtualBox VM is automatically created and boote
 The installation is performed unattended using the Ignition configuration file `config/ansible_config.ign`, which is generated from the Butane configuration file `config/ansible_config.bu`.
 During installation, the users `core` and `hth` are created and configured with SSH access.
 After the installation is complete, the VM is shut down and exported by Packer.
-The exported VirtualBox image is stored in: `packer/fedora-coreos/fedora-coreos-base.box`
+The exported VirtualBox image is stored in: `packer/coreos/coreos-base.box`
 
 ### Generate Ignition Configuration
 
@@ -24,16 +24,16 @@ The exported VirtualBox image is stored in: `packer/fedora-coreos/fedora-coreos-
 
 ```bash
 cd packer/fedora-coreos
-packer init fedora-coreos.pkr.hcl
-packer validate fedora-coreos.pkr.hcl
-packer build fedora-coreos.pkr.hcl
+packer init coreos.pkr.hcl
+packer validate coreos.pkr.hcl
+packer build coreos.pkr.hcl
 ```
 
 ### Initialize and Start Vagrant Box
 
 ```bash
 ## Ubuntu VM starten
-cd ../vagrant/fedora-coreos
-vagrant box add ../../packer/fedora-coreos/fedora-coreos-base.box --name fedora-coreos-client --force
+cd ../vagrant/coreos
+vagrant box add ../../packer/coreos/coreos-base.box --name coreos-base --force
 vagrant up
 ```

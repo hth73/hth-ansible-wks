@@ -17,7 +17,7 @@ source "virtualbox-iso" "manjaro" {
   iso_url      = "/home/hth/vbox/images/manjaro-gnome-26.0.4-260327-linux618-custom.iso"
   iso_checksum = "none"
 
-  vm_name = "manjaro-client"
+  vm_name       = "manjaro-base"
   guest_os_type = "ArchLinux_64"
 
   cpus                 = 2
@@ -50,7 +50,7 @@ build {
   sources = ["source.virtualbox-iso.manjaro"]
 
   post-processor "vagrant" {
-    output = "manjaro-client.box"
+    output              = "manjaro-base.box"
     keep_input_artifact = false
   }
 }
