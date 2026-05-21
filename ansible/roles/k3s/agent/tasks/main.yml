@@ -1,10 +1,16 @@
 ---
+# ---------------------------------------------------------------------------
+# Download k3s
+# ---------------------------------------------------------------------------
 - name: Download k3s install script
   get_url:
     url: https://get.k3s.io
     dest: /tmp/install-k3s.sh
     mode: "0755"
 
+# ---------------------------------------------------------------------------
+# Read and set k3s token
+# ---------------------------------------------------------------------------
 - name: Read k3s node token from master
   become: true
   delegate_to: master
@@ -17,6 +23,9 @@
   set_fact:
     k3s_node_token: "{{ k3s_token_raw.content | b64decode | trim }}"
 
+# ---------------------------------------------------------------------------
+# Install k3s
+# ---------------------------------------------------------------------------
 - name: Install k3s agent
   become: true
   shell: |
@@ -27,7 +36,10 @@
   args:
     creates: /usr/local/bin/k3s-agent
 
-- name: Ensure k3s-agent service is running
+# ---------------------------------------------------------------------------
+# Ensure k3s agent service is running
+# ---------------------------------------------------------------------------
+- name: Ensure k3s agent service is running
   become: true
   systemd:
     name: k3s-agent

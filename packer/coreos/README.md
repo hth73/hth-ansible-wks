@@ -1,6 +1,6 @@
 # Fedora CoreOS Packer Build and Vagrant Startup
 
-<img src="https://img.shields.io/badge/Fedora%20CoreOS-51A2DA?style=flat&logo=fedora&labelColor=ffffff&logoColor=51A2DA" /> <img src="https://img.shields.io/badge/Fedora%20Butane-51A2DA?style=flat&logo=fedora&labelColor=ffffff&logoColor=51A2DA" /> <img src="https://img.shields.io/badge/virtualbox-033467?logo=virtualbox&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Packer-00affb?logo=packer&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Vagrant-0e6aec?logo=vagrant&logoColor=white&style=flat" />
+<img src="https://img.shields.io/badge/Fedora%20CoreOS-51A2DA?style=flat&logo=fedora&labelColor=ffffff&logoColor=51A2DA" /> <img src="https://img.shields.io/badge/Fedora%20Butane-51A2DA?style=flat&logo=fedora&labelColor=ffffff&logoColor=51A2DA" /> <img src="https://img.shields.io/badge/virtualbox-033467?logo=virtualbox&logoColor=white&style=flat" />  <img src="https://img.shields.io/badge/Packer-00affb?logo=packer&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Vagrant-0e6aec?logo=vagrant&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Ansible-EE0000?logo=ansible&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/K3s-FFC61C?logo=k3s&logoColor=white&style=flat" />
 
 ---
 
@@ -29,11 +29,26 @@ packer validate coreos.pkr.hcl
 packer build coreos.pkr.hcl
 ```
 
-### Initialize and Start Vagrant Box
+### Initialize and Start Single Vagrant Box
 
 ```bash
-## Ubuntu VM starten
+## Start CoreOS Single VM
 cd ../vagrant/coreos
+mv Vagrantfile Vagrantfile_multi_host
+mv Vagrantfile_single_host Vagrantfile
+
+vagrant box add ../../packer/coreos/coreos-base.box --name coreos-base --force
+vagrant up
+```
+
+### Initialize and Start Multi Vagrant Box
+
+```bash
+## Start CoreOS Multi VM
+cd ../vagrant/coreos
+mv Vagrantfile Vagrantfile_single_host
+mv Vagrantfile_multi_host Vagrantfile
+
 vagrant box add ../../packer/coreos/coreos-base.box --name coreos-base --force
 vagrant up
 ```
