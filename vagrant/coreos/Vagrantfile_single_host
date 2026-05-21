@@ -1,0 +1,26 @@
+Vagrant.configure("2") do |config|
+  config.vm.box               = "coreos-base"
+  config.vm.hostname          = "coreos-base"
+
+  config.ssh.username         = "core"
+  config.ssh.private_key_path = File.join(__dir__, "../../secrets/ssh/id_ed25519")
+  config.ssh.insert_key       = false
+
+  # Disable default /vagrant shared folder
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  # Disable fstab modification
+  config.vm.allow_fstab_modification = false
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 4096
+    vb.cpus   = 2
+  end
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook    = "../../ansible/playbooks/coreos.yml"
+    ansible.config_file = "../../ansible/ansible.cfg"
+    ansible.become      = true
+    # ansible.verbose     = "v"
+  end
+end

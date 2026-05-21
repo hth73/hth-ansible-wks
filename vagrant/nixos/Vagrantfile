@@ -6,10 +6,10 @@ Vagrant.configure("2") do |config|
   config.ssh.password   = "vagrant"
   config.ssh.insert_key = false
 
-  # NixOS installiert mit Flake die VirtualBox Guest Additions
+  # Disable default /vagrant shared folder
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
-  # NixOS verwaltet selbst die /etc/fstab
+  # Disable fstab modification
   config.vm.allow_fstab_modification = false
 
   config.vm.provider "virtualbox" do |vb|

@@ -1,0 +1,100 @@
+Vagrant.configure("2") do |config|
+  # ---------------------------------------------------------------------------
+  # Global Settings
+  # ---------------------------------------------------------------------------
+  config.vm.box = "coreos-base"
+
+  config.ssh.username         = "core"
+  config.ssh.private_key_path = File.join(__dir__, "../../secrets/ssh/id_ed25519")
+  config.ssh.insert_key       = false
+
+  # Disable default /vagrant shared folder
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  # Disable fstab modification
+  config.vm.allow_fstab_modification = false
+
+  # ---------------------------------------------------------------------------
+  # Kubernetes Master
+  # ---------------------------------------------------------------------------
+  config.vm.define "master" do |master|
+    master.vm.hostname = "coreos-master"
+    master.vm.network "private_network", ip: "192.168.56.10"
+
+    master.vm.provider "virtualbox" do |vb|
+      vb.name   = "coreos-master"
+      vb.memory = 4096
+      vb.cpus   = 2
+    end
+
+    master.vm.provision "ansible" do |ansible|
+      ansible.playbook       = "../../ansible/playbooks/coreos.yml"
+      ansible.config_file    = "../../ansible/ansible.cfg"
+      ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.become         = true
+    end
+
+    master.vm.provision "ansible" do |ansible|
+      ansible.playbook       = "../../ansible/playbooks/k3s.yml"
+      ansible.config_file    = "../../ansible/ansible.cfg"
+      ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.become         = true
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Kubernetes Worker 1
+  # ---------------------------------------------------------------------------
+  config.vm.define "worker1" do |worker|
+    worker.vm.hostname = "coreos-worker1"
+    worker.vm.network "private_network", ip: "192.168.56.11"
+
+    worker.vm.provider "virtualbox" do |vb|
+      vb.name   = "coreos-worker1"
+      vb.memory = 4096
+      vb.cpus   = 2
+    end
+
+    worker.vm.provision "ansible" do |ansible|
+      ansible.playbook       = "../../ansible/playbooks/coreos.yml"
+      ansible.config_file    = "../../ansible/ansible.cfg"
+      ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.become         = true
+    end
+
+    worker.vm.provision "ansible" do |ansible|
+      ansible.playbook       = "../../ansible/playbooks/k3s.yml"
+      ansible.config_file    = "../../ansible/ansible.cfg"
+      ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.become         = true
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Kubernetes Worker 2
+  # ---------------------------------------------------------------------------
+  config.vm.define "worker2" do |worker|
+    worker.vm.hostname = "coreos-worker2"
+    worker.vm.network "private_network", ip: "192.168.56.12"
+
+    worker.vm.provider "virtualbox" do |vb|
+      vb.name   = "coreos-worker2"
+      vb.memory = 4096
+      vb.cpus   = 2
+    end
+
+    worker.vm.provision "ansible" do |ansible|
+      ansible.playbook       = "../../ansible/playbooks/coreos.yml"
+      ansible.config_file    = "../../ansible/ansible.cfg"
+      ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.become         = true
+    end
+
+    worker.vm.provision "ansible" do |ansible|
+      ansible.playbook       = "../../ansible/playbooks/k3s.yml"
+      ansible.config_file    = "../../ansible/ansible.cfg"
+      ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.become         = true
+    end
+  end
+end

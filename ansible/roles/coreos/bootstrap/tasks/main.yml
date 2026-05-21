@@ -1,0 +1,24 @@
+---
+- name: Check if python3 exists
+  raw: test -x /usr/bin/python3
+  register: python_check
+  failed_when: false
+  changed_when: false
+
+- name: Install Python 3 using rpm-ostree
+  become: true
+  raw: rpm-ostree install -y --allow-inactive python3
+  register: rpm_ostree_install
+  changed_when: "'Run \"systemctl reboot\" to start a reboot' in rpm_ostree_install.stdout"
+  when: python_check.rc != 0
+
+- name: Reboot Fedora CoreOS
+  become: true
+  raw: systemctl reboot
+  when: rpm_ostree_install.changed
+
+- name: Wait for SSH reconnection
+  wait_for_connection:
+    delay: 10
+    timeout: 300
+  when: rpm_ostree_install.changed
