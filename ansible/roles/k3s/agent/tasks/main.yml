@@ -29,7 +29,9 @@
 - name: Install k3s agent
   become: true
   shell: |
-    INSTALL_K3S_EXEC="agent --node-ip={{ ansible_host }}" \
+    INSTALL_K3S_EXEC="agent \
+    --node-ip={{ ansible_host }} \
+    --flannel-iface=enp0s8" \
     K3S_URL=https://{{ hostvars['master']['ansible_host'] }}:6443 \
     K3S_TOKEN={{ k3s_node_token }} \
     /tmp/install-k3s.sh

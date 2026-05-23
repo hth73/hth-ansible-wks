@@ -11,7 +11,10 @@
 - name: Install k3s server
   become: true
   shell: |
-    INSTALL_K3S_EXEC="server --node-ip={{ ansible_host }} --tls-san={{ ansible_host }}" \
+    INSTALL_K3S_EXEC="server \
+    --node-ip={{ ansible_host }} \
+    --flannel-iface=enp0s8 \
+    --tls-san={{ ansible_host }}" \
     /tmp/install-k3s.sh
   args:
     creates: /usr/local/bin/k3s
