@@ -23,17 +23,20 @@ The exported VirtualBox image is stored in: `packer/coreos/coreos-base.box`
 ### Initialize and Run Packer Build
 
 ```bash
-cd packer/fedora-coreos
+cd packer/coreos
 packer init coreos.pkr.hcl
 packer validate coreos.pkr.hcl
 packer build coreos.pkr.hcl
+
+ls -la                    
+# coreos-base.box
 ```
 
 ### Initialize and Start Single Vagrant Box
 
 ```bash
-## Start CoreOS Single VM
-cd ../vagrant/coreos
+## Start Single CoreOS VirtualBox VM
+cd vagrant/coreos
 mv Vagrantfile Vagrantfile_multi_host
 mv Vagrantfile_single_host Vagrantfile
 
@@ -41,14 +44,22 @@ vagrant box add ../../packer/coreos/coreos-base.box --name coreos-base --force
 vagrant up
 ```
 
-### Initialize and Start Multi Vagrant Box
+### Initialize and start multiple Vagrant boxes for a Kubernetes cluster
 
 ```bash
-## Start CoreOS Multi VM
-cd ../vagrant/coreos
+## Start multiple CoreOS VirtualBox VMs
+cd vagrant/coreos
 mv Vagrantfile Vagrantfile_single_host
 mv Vagrantfile_multi_host Vagrantfile
 
 vagrant box add ../../packer/coreos/coreos-base.box --name coreos-base --force
 vagrant up
 ```
+
+### Create a Kubernetes cluster
+
+To create a Kubernetes cluster, the following repositories are required.
+
+- [Understanding the CoreOS Base Installation ](https://github.com/hth73/hth-coreos)
+- [The Kubernetes cluster is created using Ansible roles](https://github.com/hth73/hth-ansible-wks)
+- [Manage Kubernetes Clusters](https://github.com/hth73/hth-kubernetes)
