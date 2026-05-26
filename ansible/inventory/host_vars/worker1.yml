@@ -1,0 +1,6 @@
+---
+iscsi_targets:
+  - iqn: iqn.2005-10.org.freenas.ctl:lun-worker-1
+    device: /dev/sdb
+    mountpoint: /var/lib/k8s-storage
+    filesystem: xfs

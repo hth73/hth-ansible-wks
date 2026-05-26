@@ -1,0 +1,59 @@
+---
+- name: Discover iscsi targets
+  become: true
+  command: >
+    iscsiadm -m discovery -t sendtargets -p {{ iscsi_target_ip }}
+  changed_when: false
+
+- name: Login iscsi target
+  become: true
+  command: >
+    iscsiadm -m node
+    -T {{ item.iqn }}
+    -p {{ iscsi_target_ip }}
+    --login
+  register: iscsi_login
+  failed_when: false
+  changed_when: "'successful' in iscsi_login.stdout"
+  loop: "{{ iscsi_targets }}"
+
+- name: Show iscsi node config
+  become: true
+  command: >
+    iscsiadm -m node -T {{ item.iqn }} -p {{ iscsi_target_ip }}
+  register: iscsi_node_config
+  changed_when: false
+  loop: "{{ iscsi_targets }}"
+
+- name: Set iscsi startup automatic
+  become: true
+  command: >
+    iscsiadm -m node
+    -T {{ item.item.iqn }}
+    -p {{ iscsi_target_ip }}
+    --op update
+    -n node.startup
+    -v automatic
+  when: "'node.startup = automatic' not in item.stdout"
+  loop: "{{ iscsi_node_config.results }}"
+
+- name: Show configured iscsi nodes
+  become: true
+  command: iscsiadm -m node
+  register: iscsi_nodes
+  changed_when: false
+
+- name: Remove unwanted iscsi targets
+  become: true
+  command: >
+    iscsiadm -m node
+    -o delete
+    -T {{ item.split()[1] }}
+    -p {{ iscsi_target_ip }}
+  loop: >
+    {{
+      iscsi_nodes.stdout_lines
+      | reject('search', iscsi_targets[0].iqn)
+      | list
+    }}
+  failed_when: false

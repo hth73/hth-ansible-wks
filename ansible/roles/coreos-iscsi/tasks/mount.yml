@@ -1,0 +1,25 @@
+---
+- name: Create mountpoint
+  become: true
+  file:
+    path: "{{ item.mountpoint }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ iscsi_targets }}"
+
+- name: Get UUID
+  become: true
+  command: blkid -s UUID -o value {{ item.device }}
+  register: blkid_result
+  changed_when: false
+  loop: "{{ iscsi_targets }}"
+
+- name: Configure fstab
+  become: true
+  mount:
+    path: "{{ item.item.mountpoint }}"
+    src: "UUID={{ item.stdout }}"
+    fstype: "{{ item.item.filesystem }}"
+    opts: "{{ iscsi_mount_options }}"
+    state: mounted
+  loop: "{{ blkid_result.results }}"

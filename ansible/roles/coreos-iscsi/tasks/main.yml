@@ -1,0 +1,9 @@
+---
+- name: Install packages
+  import_tasks: install.yml
+
+- name: Configure iscsi
+  import_tasks: iscsi.yml
+
+- name: Configure mount
+  import_tasks: mount.yml

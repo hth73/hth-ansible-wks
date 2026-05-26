@@ -1,0 +1,29 @@
+---
+- name: Install iscsi package
+  become: true
+  raw: rpm-ostree install -y --allow-inactive iscsi-initiator-utils
+  register: rpm_ostree_install
+  changed_when: >
+    'Run "systemctl reboot"' in rpm_ostree_install.stdout
+  failed_when: false
+
+- name: Reboot Fedora CoreOS
+  become: true
+  raw: systemctl reboot
+  when: rpm_ostree_install.changed
+
+- name: Wait for reconnection
+  wait_for_connection:
+    delay: 10
+    timeout: 300
+  when: rpm_ostree_install.changed
+
+- name: Enable iscsi services
+  become: true
+  systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - iscsid.service
+    - iscsi.service
