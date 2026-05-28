@@ -1,5 +1,7 @@
 # Ubuntu/Manjaro/NixOS/CoreOS Linux Unattended Installation with Packer, Vagrant and Ansible
 
+<p><img src="images/packer_vagrant_ansible.png" width="50%" height="50%" /></p>
+
 <img src="https://img.shields.io/badge/Ubuntu-f24e20?style=flat&logo=ubuntu&labelColor=ffffff&logoColor=f24e20" /> <img src="https://img.shields.io/badge/Manjaro-00bfa5?style=flat&logo=manjaro&labelColor=ffffff&logoColor=00bfa5" /> <img src="https://img.shields.io/badge/NixOS-5277C3?style=flat&logo=nixos&labelColor=ffffff&logoColor=5277C3" /> <img src="https://img.shields.io/badge/Fedora%20CoreOS-51A2DA?style=flat&logo=fedora&labelColor=ffffff&logoColor=51A2DA" /> <img src="https://img.shields.io/badge/virtualbox-033467?logo=virtualbox&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Packer-00affb?logo=packer&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Ansible-d5000e?logo=ansible&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/Vagrant-0e6aec?logo=vagrant&logoColor=white&style=flat" /> <img src="https://img.shields.io/badge/sops-3e484d?logo=gnuprivacyguard&logoColor=white&style=flat" />
 
 ---
