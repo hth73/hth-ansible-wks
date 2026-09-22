@@ -7,6 +7,29 @@
     mode: '0755'
   loop: "{{ iscsi_targets }}"
 
+- name: Check filesystem
+  become: true
+  command: blkid -o value -s TYPE {{ item.device }}
+  register: filesystem_result
+  changed_when: false
+  failed_when: false
+  loop: "{{ iscsi_targets }}"
+
+- name: Create filesystem
+  become: true
+  filesystem:
+    fstype: "{{ item.item.filesystem }}"
+    dev: "{{ item.item.device }}"
+  when: item.stdout == ""
+  loop: "{{ filesystem_result.results }}"
+- name: Create mountpoint
+  become: true
+  file:
+    path: "{{ item.mountpoint }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ iscsi_targets }}"
+
 - name: Get UUID
   become: true
   command: blkid -s UUID -o value {{ item.device }}

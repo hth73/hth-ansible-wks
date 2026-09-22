@@ -15,7 +15,7 @@ packer {
 
 variable "iso_path" {
   type    = string
-  default = "file:///home/hth/vbox/images/fedora-coreos-44.20260419.3.1-live-iso.x86_64.iso"
+  default = "file:///home/hth/vbox/images/fedora-coreos-44.20260829.3.1-live-iso.x86_64.iso"
 }
 
 variable "ignition_file" {
