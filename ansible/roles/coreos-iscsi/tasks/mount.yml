@@ -46,3 +46,11 @@
     opts: "{{ iscsi_mount_options }}"
     state: mounted
   loop: "{{ blkid_result.results }}"
+
+- name: Create storage directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.mountpoint }}/{{ item.name }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ iscsi_storage_directories }}"

@@ -4,3 +4,7 @@ iscsi_targets:
     device: /dev/sdb
     mountpoint: /var/lib/k8s-storage
     filesystem: xfs
+
+iscsi_storage_directories:
+  - mountpoint: /var/lib/k8s-storage
+    name: postgres
