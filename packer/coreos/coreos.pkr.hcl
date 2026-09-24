@@ -25,7 +25,7 @@ variable "ignition_file" {
 
 variable "ignition_hash" {
   type    = string
-  default = "sha256-3834f44c52b0b80ea9b3af9b47dd7a4afe4d65c32165a053fca1310e3179383c"
+  default = "sha256-a501a6d905d9b27773b29a9594358550f26536ad4ccb306d02422a2f9657fa03"
 }
 
 variable "ssh_private_key_file" {

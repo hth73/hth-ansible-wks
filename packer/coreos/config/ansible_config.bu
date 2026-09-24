@@ -47,6 +47,24 @@ storage:
         inline: |
           export SYSTEMD_PAGER=cat
 
+    # Zincati update Strategie anpassen auf periodic
+    - path: /etc/zincati/config.d/90-auto-updates.toml
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [updates]
+          enabled = true
+          strategy = "periodic"
+
+          [updates.periodic]
+          time_zone = "Europe/Berlin"
+
+          [[updates.periodic.window]]
+          days = [ "Sun" ]
+          start_time = "03:00"
+          length_minutes = 30
+
   links:
     # Zeitzone
     - path: /etc/localtime

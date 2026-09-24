@@ -54,6 +54,15 @@
           "source": "data:,export%20SYSTEMD_PAGER%3Dcat%0A"
         },
         "mode": 420
+      },
+      {
+        "overwrite": true,
+        "path": "/etc/zincati/config.d/90-auto-updates.toml",
+        "contents": {
+          "compression": "gzip",
+          "source": "data:;base64,H4sIAAAAAAAC/2TMMarDMBCE4X5PsegAfgJ3D9wEcoKURhglGhyBvRLSCuOcPqhwlXb45p9bDl5RHUH8c0PgibU0UNXiFevJE5uMElOIL0N0+eHaHGncsXySoNN7Kynj74ayRen+5zAcUUI6nKPgz8oTz2weTQw7quqLLr3XU3b8t9bQBln1vexRmqL70dI3AAD//1c3o3i2AAAA"
+        },
+        "mode": 420
       }
     ],
     "links": [
