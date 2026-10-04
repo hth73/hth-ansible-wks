@@ -76,7 +76,7 @@
 - name: Install kubeconfig on agent
   become: true
   ansible.builtin.copy:
-    content: "{{ hostvars[groups['k3s_server'][0]]['master_kubeconfig']['content'] | b64decode | replace('https://127.0.0.1:6443', 'https://' ~ k3s_server_ip ~ ':6443') }}"
+    content: "{{ hostvars[ansible_play_hosts[0]]['master_kubeconfig']['content'] | b64decode | replace('https://127.0.0.1:6443', 'https://' ~ k3s_server_ip ~ ':6443') }}"
     dest: /home/core/.kube/config
     owner: core
     group: core
