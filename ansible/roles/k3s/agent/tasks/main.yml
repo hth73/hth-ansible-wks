@@ -47,3 +47,48 @@
     name: k3s-agent
     enabled: true
     state: started
+
+
+# ---------------------------------------------------------------------------
+# Read kubeconfig from master
+# ---------------------------------------------------------------------------
+
+- name: Read kubeconfig from master
+  become: true
+  delegate_to: master
+  ansible.builtin.slurp:
+    src: /etc/rancher/k3s/k3s.yaml
+  register: master_kubeconfig
+  run_once: true
+
+# ---------------------------------------------------------------------------
+# Configure kubectl for user core
+# ---------------------------------------------------------------------------
+- name: Create .kube directory
+  become: true
+  ansible.builtin.file:
+    path: /home/core/.kube
+    state: directory
+    owner: core
+    group: core
+    mode: "0700"
+
+- name: Install kubeconfig on agent
+  become: true
+  ansible.builtin.copy:
+    content: "{{ hostvars[groups['k3s_server'][0]]['master_kubeconfig']['content'] | b64decode | replace('https://127.0.0.1:6443', 'https://' ~ k3s_server_ip ~ ':6443') }}"
+    dest: /home/core/.kube/config
+    owner: core
+    group: core
+    mode: "0600"
+
+- name: Configure KUBECONFIG in bashrc
+  become: true
+  ansible.builtin.lineinfile:
+    path: /home/core/.bashrc
+    line: 'export KUBECONFIG="$HOME/.kube/config"'
+    state: present
+    create: true
+    owner: core
+    group: core
+    mode: "0644"

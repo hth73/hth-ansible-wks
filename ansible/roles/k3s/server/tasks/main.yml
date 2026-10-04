@@ -30,6 +30,39 @@
     state: started
 
 # ---------------------------------------------------------------------------
+# Configure kubectl for user core
+# ---------------------------------------------------------------------------
+- name: Create .kube directory
+  become: true
+  ansible.builtin.file:
+    path: /home/core/.kube
+    state: directory
+    owner: core
+    group: core
+    mode: "0700"
+
+- name: Copy kubeconfig for user core
+  become: true
+  ansible.builtin.copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: /home/core/.kube/config
+    remote_src: true
+    owner: core
+    group: core
+    mode: "0600"
+
+- name: Configure KUBECONFIG in bashrc
+  become: true
+  ansible.builtin.lineinfile:
+    path: /home/core/.bashrc
+    line: 'export KUBECONFIG="$HOME/.kube/config"'
+    state: present
+    create: true
+    owner: core
+    group: core
+    mode: "0644"
+
+# ---------------------------------------------------------------------------
 # Wait for k3s API
 # ---------------------------------------------------------------------------
 - name: Wait for k3s API
