@@ -5,20 +5,42 @@
   failed_when: false
   changed_when: false
 
+- name: Wait for rpm-ostree transaction to finish
+  become: true
+  raw: |
+    for i in $(seq 1 60); do
+      if rpm-ostree status --json | jq -e '.transaction == null' >/dev/null; then
+        exit 0
+      fi
+      sleep 5
+    done
+    echo "Timeout waiting for rpm-ostree transaction to finish"
+    exit 1
+  changed_when: false
+  when: python_check.rc != 0
+
 - name: Install Python 3 using rpm-ostree
   become: true
-  raw: rpm-ostree install -y --allow-inactive python3
+  ansible.builtin.raw: rpm-ostree install -y --allow-inactive python3
   register: rpm_ostree_install
-  changed_when: "'Run \"systemctl reboot\" to start a reboot' in rpm_ostree_install.stdout"
+  failed_when:
+    - rpm_ostree_install.rc != 0
+    - "'already requested' not in rpm_ostree_install.stdout"
+  changed_when: >
+    'Run "systemctl reboot" to start a reboot' in rpm_ostree_install.stdout
+    or 'already requested' in rpm_ostree_install.stdout
   when: python_check.rc != 0
 
 - name: Reboot Fedora CoreOS
   become: true
-  raw: systemctl reboot
+  ansible.builtin.raw: systemctl reboot
+  register: reboot_result
+  failed_when: false
+  changed_when: true
   when: rpm_ostree_install.changed
 
 - name: Wait for SSH reconnection
-  wait_for_connection:
+  ansible.builtin.wait_for_connection:
     delay: 10
     timeout: 300
   when: rpm_ostree_install.changed

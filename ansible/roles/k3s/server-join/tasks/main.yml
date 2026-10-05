@@ -1,6 +1,5 @@
----
 # ---------------------------------------------------------------------------
-# Download k3s
+# Download k3s install script
 # ---------------------------------------------------------------------------
 - name: Download k3s install script
   become: true
@@ -10,7 +9,7 @@
     mode: "0755"
 
 # ---------------------------------------------------------------------------
-# Read k3s token from initial server
+# Read K3s node token from initial server
 # ---------------------------------------------------------------------------
 - name: Read k3s node token from initial server
   become: true
@@ -21,30 +20,41 @@
   run_once: true
 
 # ---------------------------------------------------------------------------
-# Install k3s agent
+# Join existing K3s cluster
 # ---------------------------------------------------------------------------
-- name: Install k3s agent
+- name: Join k3s cluster
   become: true
   ansible.builtin.shell: |
-    INSTALL_K3S_EXEC="agent \
+    INSTALL_K3S_EXEC="server \
+    --server=https://{{ k3s_server_init_ip }}:6443 \
+    --token={{ k3s_token_raw.content | b64decode | trim }} \
     --node-ip={{ ansible_host }} \
-    --flannel-iface=enp0s8" \
-    K3S_URL=https://{{ k3s_server_init_ip }}:6443 \
-    K3S_TOKEN={{ k3s_token_raw.content | b64decode | trim }} \
+    --flannel-iface=enp0s8 \
+    --tls-san={{ ansible_host }}" \
     /tmp/install-k3s.sh
   args:
-    creates: /usr/local/bin/k3s-agent
+    creates: /usr/local/bin/k3s
   no_log: true
 
 # ---------------------------------------------------------------------------
-# Ensure k3s agent service is running
+# Ensure k3s service is enabled and running
 # ---------------------------------------------------------------------------
-- name: Ensure k3s agent service is running
+- name: Ensure k3s service is running
   become: true
-  systemd:
-    name: k3s-agent
+  ansible.builtin.systemd:
+    name: k3s
     enabled: true
     state: started
+
+# ---------------------------------------------------------------------------
+# Wait for k3s API
+# ---------------------------------------------------------------------------
+- name: Wait for k3s API
+  become: true
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: 6443
+    timeout: 120
 
 # ---------------------------------------------------------------------------
 # Read kubeconfig from initial server

@@ -1,21 +1,28 @@
 ---
 # ---------------------------------------------------------------------------
-# Install k3s server
+# Initialize K3s cluster
 # ---------------------------------------------------------------------------
-- name: Install k3s server
-  hosts: k3s_servers
+- name: Initialize K3s cluster
+  hosts: k3s_server_init
   become: true
-
   roles:
-    - k3s/server
+    - k3s/server-init
 
 # ---------------------------------------------------------------------------
-# Install k3s agents
+# Join K3s servers
 # ---------------------------------------------------------------------------
-- name: Install k3s agents
+- name: Join K3s servers
+  hosts: k3s_server_join
+  become: true
+  roles:
+    - k3s/server-join
+
+# ---------------------------------------------------------------------------
+# Install K3s agents
+# ---------------------------------------------------------------------------
+- name: Install K3s agents
   hosts: k3s_agents
   become: true
-
   roles:
     - k3s/agent
     - coreos-iscsi

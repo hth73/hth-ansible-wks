@@ -15,30 +15,103 @@ Vagrant.configure("2") do |config|
   config.vm.allow_fstab_modification = false
 
   # ---------------------------------------------------------------------------
-  # Kubernetes Master
+  # Kubernetes Master 1
   # ---------------------------------------------------------------------------
-  config.vm.define "master" do |master|
-    master.vm.hostname = "coreos-master"
+  config.vm.define "coreos-master1" do |master|
+    master.vm.hostname = "coreos-master1"
     master.vm.network "private_network", ip: "192.168.56.10"
 
     master.vm.provider "virtualbox" do |vb|
-      vb.name   = "coreos-master"
+      vb.name   = "coreos-master1"
       vb.memory = 4096
       vb.cpus   = 2
 
       vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
     end
 
+    # Install and configure Fedora CoreOS
     master.vm.provision "ansible" do |ansible|
       ansible.playbook       = "../../ansible/playbooks/coreos.yml"
       ansible.config_file    = "../../ansible/ansible.cfg"
+      ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.limit          = "coreos-master1"
       ansible.become         = true
     end
 
+    # Initialize K3s cluster
     master.vm.provision "ansible" do |ansible|
       ansible.playbook       = "../../ansible/playbooks/k3s.yml"
       ansible.config_file    = "../../ansible/ansible.cfg"
       ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.limit          = "coreos-master1"
+      ansible.become         = true
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Kubernetes Master 2
+  # ---------------------------------------------------------------------------
+  config.vm.define "coreos-master2" do |master|
+    master.vm.hostname = "coreos-master2"
+    master.vm.network "private_network", ip: "192.168.56.11"
+
+    master.vm.provider "virtualbox" do |vb|
+      vb.name   = "coreos-master2"
+      vb.memory = 4096
+      vb.cpus   = 2
+
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+    end
+
+    # Install and configure Fedora CoreOS
+    master.vm.provision "ansible" do |ansible|
+      ansible.playbook       = "../../ansible/playbooks/coreos.yml"
+      ansible.config_file    = "../../ansible/ansible.cfg"
+      ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.limit          = "coreos-master2"
+      ansible.become         = true
+    end
+
+    # Join K3s cluster
+    master.vm.provision "ansible" do |ansible|
+      ansible.playbook       = "../../ansible/playbooks/k3s.yml"
+      ansible.config_file    = "../../ansible/ansible.cfg"
+      ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.limit          = "coreos-master2"
+      ansible.become         = true
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Kubernetes Master 3
+  # ---------------------------------------------------------------------------
+  config.vm.define "coreos-master3" do |master|
+    master.vm.hostname = "coreos-master3"
+    master.vm.network "private_network", ip: "192.168.56.12"
+
+    master.vm.provider "virtualbox" do |vb|
+      vb.name   = "coreos-master3"
+      vb.memory = 4096
+      vb.cpus   = 2
+
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+    end
+
+    # Install and configure Fedora CoreOS
+    master.vm.provision "ansible" do |ansible|
+      ansible.playbook       = "../../ansible/playbooks/coreos.yml"
+      ansible.config_file    = "../../ansible/ansible.cfg"
+      ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.limit          = "coreos-master3"
+      ansible.become         = true
+    end
+
+    # Join K3s cluster
+    master.vm.provision "ansible" do |ansible|
+      ansible.playbook       = "../../ansible/playbooks/k3s.yml"
+      ansible.config_file    = "../../ansible/ansible.cfg"
+      ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.limit          = "coreos-master3"
       ansible.become         = true
     end
   end
@@ -46,9 +119,9 @@ Vagrant.configure("2") do |config|
   # ---------------------------------------------------------------------------
   # Kubernetes Worker 1
   # ---------------------------------------------------------------------------
-  config.vm.define "worker1" do |worker|
+  config.vm.define "coreos-worker1" do |worker|
     worker.vm.hostname = "coreos-worker1"
-    worker.vm.network "private_network", ip: "192.168.56.11"
+    worker.vm.network "private_network", ip: "192.168.56.13"
 
     worker.vm.provider "virtualbox" do |vb|
       vb.name   = "coreos-worker1"
@@ -58,16 +131,21 @@ Vagrant.configure("2") do |config|
       vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
     end
 
+    # Install and configure Fedora CoreOS
     worker.vm.provision "ansible" do |ansible|
       ansible.playbook       = "../../ansible/playbooks/coreos.yml"
       ansible.config_file    = "../../ansible/ansible.cfg"
+      ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.limit          = "coreos-worker1"
       ansible.become         = true
     end
 
+    # Join K3s cluster and configure iSCSI
     worker.vm.provision "ansible" do |ansible|
       ansible.playbook       = "../../ansible/playbooks/k3s.yml"
       ansible.config_file    = "../../ansible/ansible.cfg"
       ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.limit          = "coreos-worker1"
       ansible.become         = true
     end
   end
@@ -75,9 +153,9 @@ Vagrant.configure("2") do |config|
   # ---------------------------------------------------------------------------
   # Kubernetes Worker 2
   # ---------------------------------------------------------------------------
-  config.vm.define "worker2" do |worker|
+  config.vm.define "coreos-worker2" do |worker|
     worker.vm.hostname = "coreos-worker2"
-    worker.vm.network "private_network", ip: "192.168.56.12"
+    worker.vm.network "private_network", ip: "192.168.56.14"
 
     worker.vm.provider "virtualbox" do |vb|
       vb.name   = "coreos-worker2"
@@ -87,16 +165,21 @@ Vagrant.configure("2") do |config|
       vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
     end
 
+    # Install and configure Fedora CoreOS
     worker.vm.provision "ansible" do |ansible|
       ansible.playbook       = "../../ansible/playbooks/coreos.yml"
       ansible.config_file    = "../../ansible/ansible.cfg"
+      ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.limit          = "coreos-worker2"
       ansible.become         = true
     end
 
+    # Join K3s cluster and configure iSCSI
     worker.vm.provision "ansible" do |ansible|
       ansible.playbook       = "../../ansible/playbooks/k3s.yml"
       ansible.config_file    = "../../ansible/ansible.cfg"
       ansible.inventory_path = "../../ansible/inventory/hosts.ini"
+      ansible.limit          = "coreos-worker2"
       ansible.become         = true
     end
   end

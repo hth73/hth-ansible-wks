@@ -1,17 +1,22 @@
 ---
 # ---------------------------------------------------------------------------
-# Download and Install k3s
+# Download k3s install script
 # ---------------------------------------------------------------------------
 - name: Download k3s install script
-  get_url:
+  become: true
+  ansible.builtin.get_url:
     url: https://get.k3s.io
     dest: /tmp/install-k3s.sh
     mode: "0755"
 
-- name: Install k3s server
+# ---------------------------------------------------------------------------
+# Initialize K3s cluster
+# ---------------------------------------------------------------------------
+- name: Initialize k3s cluster
   become: true
-  shell: |
+  ansible.builtin.shell: |
     INSTALL_K3S_EXEC="server \
+    --cluster-init \
     --node-ip={{ ansible_host }} \
     --flannel-iface=enp0s8 \
     --tls-san={{ ansible_host }}" \
@@ -24,7 +29,7 @@
 # ---------------------------------------------------------------------------
 - name: Ensure k3s service is running
   become: true
-  systemd:
+  ansible.builtin.systemd:
     name: k3s
     enabled: true
     state: started
@@ -33,25 +38,27 @@
 # Wait for k3s API
 # ---------------------------------------------------------------------------
 - name: Wait for k3s API
-  wait_for:
+  become: true
+  ansible.builtin.wait_for:
     host: 127.0.0.1
     port: 6443
     timeout: 120
 
 # ---------------------------------------------------------------------------
-# Wait for node token
+# Wait for k3s node token
 # ---------------------------------------------------------------------------
 - name: Wait for k3s node token
-  wait_for:
+  become: true
+  ansible.builtin.wait_for:
     path: /var/lib/rancher/k3s/server/node-token
     timeout: 120
 
 # ---------------------------------------------------------------------------
-# Read node token
+# Read k3s node token
 # ---------------------------------------------------------------------------
 - name: Read k3s node token
   become: true
-  slurp:
+  ansible.builtin.slurp:
     src: /var/lib/rancher/k3s/server/node-token
   register: k3s_token_raw
 
@@ -92,5 +99,5 @@
 # Export token as Ansible fact
 # ---------------------------------------------------------------------------
 - name: Set k3s node token fact
-  set_fact:
+  ansible.builtin.set_fact:
     k3s_node_token: "{{ k3s_token_raw.content | b64decode | trim }}"
