@@ -15,7 +15,7 @@ packer {
 
 variable "iso_path" {
   type    = string
-  default = "file:///home/hth/vbox/images/fedora-coreos-44.20260829.3.1-live-iso.x86_64.iso"
+  default = "file:///home/hth/vbox/images/fedora-coreos-44.20260913.3.2-live-iso.x86_64.iso"
 }
 
 variable "ignition_file" {
@@ -40,7 +40,7 @@ source "virtualbox-iso" "coreos" {
   vm_name       = "coreos-base"
   guest_os_type = "Fedora_64"
 
-  disk_size = 20480
+  disk_size = 51200
   memory    = 4096
   cpus      = 2
 

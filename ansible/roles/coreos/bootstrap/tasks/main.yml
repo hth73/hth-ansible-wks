@@ -31,11 +31,13 @@
     or 'already requested' in rpm_ostree_install.stdout
   when: python_check.rc != 0
 
-- name: Reboot Fedora CoreOS
+- name: Schedule reboot of Fedora CoreOS
   become: true
-  ansible.builtin.raw: systemctl reboot
-  register: reboot_result
-  failed_when: false
+  ansible.builtin.raw: >
+    systemd-run --unit=ansible-bootstrap-reboot
+    --on-active=5s /usr/bin/systemctl reboot
+  register: reboot_schedule
+  failed_when: reboot_schedule.rc != 0
   changed_when: true
   when: rpm_ostree_install.changed
 
