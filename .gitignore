@@ -1,0 +1,18 @@
+# files
+*.ovf
+*.vmdk
+*.log
+secrets/ssh/id_ed25519
+secrets/ssh/id_ed25519.pub
+packer/ubuntu/ubuntu-base.box
+packer/manjaro/manjaro-base.box
+packer/coreos/coreos-base.box
+vagrant/nixos/nixos-base.box
+ansible/.sops.yaml
+
+# Exclude Folder
+.git/
+.vagrant/
+packer/ubuntu/output-ubuntu/*
+packer/manjaro/output-manjaro/*
+packer/coreos/output-coreos/*
