@@ -1,59 +1,89 @@
 ---
-- name: Discover iscsi targets
+- name: Discover iSCSI targets (15 second timeout)
   become: true
-  command: >
-    iscsiadm -m discovery -t sendtargets -p {{ iscsi_target_ip }}
+  command:
+    argv:
+      - timeout
+      - 15s
+      - iscsiadm
+      - -m
+      - discovery
+      - -t
+      - sendtargets
+      - -p
+      - "{{ iscsi_target_ip }}"
+  register: iscsi_discovery
   changed_when: false
-
-- name: Login iscsi target
-  become: true
-  command: >
-    iscsiadm -m node
-    -T {{ item.iqn }}
-    -p {{ iscsi_target_ip }}
-    --login
-  register: iscsi_login
   failed_when: false
-  changed_when: "'successful' in iscsi_login.stdout"
-  loop: "{{ iscsi_targets }}"
 
-- name: Show iscsi node config
-  become: true
-  command: >
-    iscsiadm -m node -T {{ item.iqn }} -p {{ iscsi_target_ip }}
-  register: iscsi_node_config
-  changed_when: false
-  loop: "{{ iscsi_targets }}"
+- name: Determine iSCSI availability
+  ansible.builtin.set_fact:
+    iscsi_available: >-
+      {{
+        iscsi_discovery.rc == 0
+        and (iscsi_discovery.stdout | trim | length > 0)
+      }}
 
-- name: Set iscsi startup automatic
-  become: true
-  command: >
-    iscsiadm -m node
-    -T {{ item.item.iqn }}
-    -p {{ iscsi_target_ip }}
-    --op update
-    -n node.startup
-    -v automatic
-  when: "'node.startup = automatic' not in item.stdout"
-  loop: "{{ iscsi_node_config.results }}"
+- name: Warn if iSCSI storage is unavailable
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: iSCSI target {{ iscsi_target_ip }} is unavailable
+      or discovery returned no targets. Skipping iSCSI login
+      and storage configuration on {{ inventory_hostname }}.
+  when: not iscsi_available
 
-- name: Show configured iscsi nodes
-  become: true
-  command: iscsiadm -m node
-  register: iscsi_nodes
-  changed_when: false
+- name: Configure discovered iSCSI targets
+  when: iscsi_available
+  block:
+  - name: Login iscsi target
+    become: true
+    command: >
+      iscsiadm -m node
+      -T {{ item.iqn }}
+      -p {{ iscsi_target_ip }}
+      --login
+    register: iscsi_login
+    failed_when: false
+    changed_when: "'successful' in iscsi_login.stdout"
+    loop: "{{ iscsi_targets }}"
 
-- name: Remove unwanted iscsi targets
-  become: true
-  command: >
-    iscsiadm -m node
-    -o delete
-    -T {{ item.split()[1] }}
-    -p {{ iscsi_target_ip }}
-  loop: >
-    {{
-      iscsi_nodes.stdout_lines
-      | reject('search', iscsi_targets[0].iqn)
-      | list
-    }}
-  failed_when: false
+  - name: Show iscsi node config
+    become: true
+    command: >
+      iscsiadm -m node -T {{ item.iqn }} -p {{ iscsi_target_ip }}
+    register: iscsi_node_config
+    changed_when: false
+    loop: "{{ iscsi_targets }}"
+
+  - name: Set iscsi startup automatic
+    become: true
+    command: >
+      iscsiadm -m node
+      -T {{ item.item.iqn }}
+      -p {{ iscsi_target_ip }}
+      --op update
+      -n node.startup
+      -v automatic
+    when: "'node.startup = automatic' not in item.stdout"
+    loop: "{{ iscsi_node_config.results }}"
+
+  - name: Show configured iscsi nodes
+    become: true
+    command: iscsiadm -m node
+    register: iscsi_nodes
+    changed_when: false
+
+  - name: Remove unwanted iscsi targets
+    become: true
+    command: >
+      iscsiadm -m node
+      -o delete
+      -T {{ item.split()[1] }}
+      -p {{ iscsi_target_ip }}
+    loop: >
+      {{
+        iscsi_nodes.stdout_lines
+        | reject('search', iscsi_targets[0].iqn)
+        | list
+      }}
+    failed_when: false

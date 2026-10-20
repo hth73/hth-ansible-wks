@@ -7,3 +7,4 @@
 
 - name: Configure mount
   import_tasks: mount.yml
+  when: iscsi_available | default(false)

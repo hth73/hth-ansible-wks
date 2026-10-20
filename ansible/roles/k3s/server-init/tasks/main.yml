@@ -17,6 +17,8 @@
   ansible.builtin.shell: |
     INSTALL_K3S_EXEC="server \
     --cluster-init \
+    --disable=traefik \
+    --disable=coredns \
     --node-ip={{ ansible_host }} \
     --flannel-iface=enp0s8 \
     --tls-san={{ ansible_host }}" \

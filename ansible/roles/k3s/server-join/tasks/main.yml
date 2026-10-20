@@ -27,6 +27,8 @@
   ansible.builtin.shell: |
     INSTALL_K3S_EXEC="server \
     --server=https://{{ k3s_server_init_ip }}:6443 \
+    --disable=traefik \
+    --disable=coredns \
     --token={{ k3s_token_raw.content | b64decode | trim }} \
     --node-ip={{ ansible_host }} \
     --flannel-iface=enp0s8 \
