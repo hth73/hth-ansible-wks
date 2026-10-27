@@ -14,7 +14,7 @@
 # ---------------------------------------------------------------------------
 - name: Read k3s node token from initial server
   become: true
-  delegate_to: "{{ groups['k3s_server_init'][0] }}"
+  delegate_to: "{{ groups['k8s_server_init'][0] }}"
   ansible.builtin.slurp:
     src: /var/lib/rancher/k3s/server/node-token
   register: k3s_token_raw
@@ -29,7 +29,7 @@
     INSTALL_K3S_EXEC="agent \
     --node-ip={{ ansible_host }} \
     --flannel-iface=enp0s8" \
-    K3S_URL=https://{{ k3s_server_init_ip }}:6443 \
+    K3S_URL=https://{{ k8s_server_init_ip }}:6443 \
     K3S_TOKEN={{ k3s_token_raw.content | b64decode | trim }} \
     /tmp/install-k3s.sh
   args:
@@ -51,7 +51,7 @@
 # ---------------------------------------------------------------------------
 - name: Read kubeconfig from initial server
   become: true
-  delegate_to: "{{ groups['k3s_server_init'][0] }}"
+  delegate_to: "{{ groups['k8s_server_init'][0] }}"
   ansible.builtin.slurp:
     src: /etc/rancher/k3s/k3s.yaml
   register: master_kubeconfig
@@ -72,7 +72,7 @@
 - name: Install kubeconfig
   become: true
   ansible.builtin.copy:
-    content: "{{ master_kubeconfig.content | b64decode | replace('https://127.0.0.1:6443', 'https://' ~ k3s_server_init_ip ~ ':6443') }}"
+    content: "{{ master_kubeconfig.content | b64decode | replace('https://127.0.0.1:6443', 'https://' ~ k8s_server_init_ip ~ ':6443') }}"
     dest: /home/core/.kube/config
     owner: core
     group: core

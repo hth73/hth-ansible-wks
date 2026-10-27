@@ -1,0 +1,2 @@
+k8s_server_init_ip: 192.168.56.10
+k8s_cluster_init: true

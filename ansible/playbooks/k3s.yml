@@ -3,7 +3,7 @@
 # Initialize K3s cluster
 # ---------------------------------------------------------------------------
 - name: Initialize K3s cluster
-  hosts: k3s_server_init
+  hosts: k8s_server_init
   become: true
   roles:
     - k3s/server-init
@@ -12,7 +12,7 @@
 # Join K3s servers
 # ---------------------------------------------------------------------------
 - name: Join K3s servers
-  hosts: k3s_server_join
+  hosts: k8s_server_join
   become: true
   roles:
     - k3s/server-join
@@ -21,7 +21,7 @@
 # Install K3s agents
 # ---------------------------------------------------------------------------
 - name: Install K3s agents
-  hosts: k3s_agents
+  hosts: k8s_workers
   become: true
   roles:
     - k3s/agent
