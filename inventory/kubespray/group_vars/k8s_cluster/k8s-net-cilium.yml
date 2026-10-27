@@ -1,0 +1,38 @@
+---
+# Log-level
+cilium_debug: false
+
+cilium_mtu: ""
+cilium_enable_ipv4: true
+cilium_enable_ipv6: false
+
+# Enable l2 announcement from cilium to replace Metallb Ref: https://docs.cilium.io/en/v1.14/network/l2-announcements/
+cilium_l2announcements: false
+
+# Overlay Network Mode
+cilium_tunnel_mode: disabled
+cilium_kube_proxy_replacement: true
+cilium_auto_direct_node_routes: true
+cilium_native_routing_cidr: "172.16.0.0/16"
+
+cilium_encryption_enabled: true
+cilium_encryption_type: "wireguard"
+
+cilium_enable_hubble: true
+cilium_enable_hubble_ui: true
+cilium_hubble_install: true
+cilium_hubble_tls_generate: true
+
+cilium_ipam_mode: cluster-pool
+cilium_pool_cidr: "172.16.0.0/16"
+cilium_pool_mask_size: "23"
+
+cilium_extra_values:
+  devices:
+    - enp0s8
+  ipam:
+    operator:
+      clusterPoolIPv4PodCIDRList:
+        - "172.16.10.0/23"
+        - "172.16.20.0/23"
+        - "172.16.30.0/23"
