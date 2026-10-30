@@ -14,6 +14,9 @@ Vagrant.configure("2") do |config|
   # Disable fstab modification
   config.vm.allow_fstab_modification = false
 
+  # Wait up to 120 seconds for graceful guest shutdown
+  config.vm.graceful_halt_timeout = 120
+
   # ---------------------------------------------------------------------------
   # Kubernetes Master 1
   # ---------------------------------------------------------------------------
