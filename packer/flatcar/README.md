@@ -17,7 +17,7 @@ The exported VirtualBox image is stored in: `packer/flatcar/flatcar-base.box`
 
 ### Generate Ignition Configuration
 
-[CoreOS Ignition File](config/README.md)
+[Flatcar Linux Ignition File](config/README.md)
 
 ### Initialize and Run Packer Build
 
@@ -34,7 +34,7 @@ ls -la
 ### Initialize and Start Single Vagrant Box
 
 ```bash
-## Start Single CoreOS VirtualBox VM
+## Start Single Flatcar VirtualBox VM
 ## sudo apt install direnv -y 
 cd vagrant/flatcar
 
@@ -51,7 +51,7 @@ vagrant up
 ### Initialize and start multiple Vagrant boxes for a Kubernetes cluster
 
 ```bash
-## Start multiple CoreOS VirtualBox VMs
+## Start multiple Flatcar VirtualBox VMs
 cd vagrant/flatcar
 
 vi .envrc
@@ -60,7 +60,7 @@ export VAGRANT_VAGRANTFILE=Vagrantfile_k8s_cluster
 
 direnv allow
 
-vagrant box add ../../packer/coreos/coreos-base.box --name coreos-base --force
+vagrant box add ../../packer/flatcar/flatcar-base.box --name flatcar-base --force
 vagrant up
 ```
 
