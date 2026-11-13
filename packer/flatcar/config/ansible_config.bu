@@ -1,0 +1,55 @@
+# Flatcar Ansible Butane configuration
+# Date: 2026-11-13
+
+variant: flatcar
+version: 1.1.0
+
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICn/bnaOdeE/cZaqbDXVP9q96Rj5gs878+9806K0UK2L
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJVpcUidKX5g1Ydq4HW3H560hVzVD5pEHbM8zHHwFYlT
+
+    - name: hth
+      ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICn/bnaOdeE/cZaqbDXVP9q96Rj5gs878+9806K0UK2L
+      password_hash: $y$j9T$xtFqbXNWo4Q7ye693r6OG0$3hG8X61jMRQICFMnByai1BKfaHv1B/n3MdxNUf72GR/
+      home_dir: /home/hth
+      no_create_home: false
+      groups:
+        - wheel
+      shell: /bin/bash
+
+storage:
+  files:
+    # German keyboard
+    - path: /etc/vconsole.conf
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: KEYMAP=de
+
+    # Systemd without pager
+    - path: /etc/profile.d/systemd-pager.sh
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          export SYSTEMD_PAGER=cat
+
+    # Flatcar automatic updates / reboot window
+    - path: /etc/flatcar/update.conf
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          REBOOT_STRATEGY=reboot
+          LOCKSMITHD_REBOOT_WINDOW_START="Sun 03:00"
+          LOCKSMITHD_REBOOT_WINDOW_LENGTH=30m
+
+  links:
+    # Timezone
+    - path: /etc/localtime
+      overwrite: true
+      target: ../usr/share/zoneinfo/Europe/Berlin

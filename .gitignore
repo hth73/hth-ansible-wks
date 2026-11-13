@@ -8,6 +8,7 @@ inventory/kubespray/credentials/*
 packer/ubuntu/ubuntu-base.box
 packer/manjaro/manjaro-base.box
 packer/coreos/coreos-base.box
+packer/flatcar/flatcar-base.box
 vagrant/nixos/nixos-base.box
 ansible/.sops.yaml
 
@@ -17,3 +18,4 @@ ansible/.sops.yaml
 packer/ubuntu/output-ubuntu/*
 packer/manjaro/output-manjaro/*
 packer/coreos/output-coreos/*
+packer/flatcar/output-flatcar/*

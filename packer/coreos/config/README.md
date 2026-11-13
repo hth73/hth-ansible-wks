@@ -13,11 +13,11 @@
 # --------------------------------------------------
 # Download and install Butane
 # --------------------------------------------------
-sudo wget -O /usr/local/bin/butane https://github.com/coreos/butane/releases/download/v0.27.0/butane-x86_64-unknown-linux-gnu
+sudo wget -O /usr/local/bin/butane https://github.com/coreos/butane/releases/download/v0.29.0/butane-x86_64-unknown-linux-gnu
 sudo chmod +x /usr/local/bin/butane
 
 butane --version
-# Butane 0.27.0
+# Butane 0.29.0
 
 # --------------------------------------------------
 # Convert Ignition file
@@ -38,8 +38,6 @@ sha512sum ansible_config.ign
 # --------------------------------------------------
 # fedora-coreos.pkr.hcl
 # --------------------------------------------------
-...
-
 variable "ignition_file" {
   type    = string
   default = "config/ansible_config.ign"
