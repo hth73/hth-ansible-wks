@@ -2,6 +2,7 @@
 *.ovf
 *.vmdk
 *.log
+*kubeconfig
 secrets/ssh/id_ed25519
 secrets/ssh/id_ed25519.pub
 inventory/kubespray/credentials/*
@@ -19,3 +20,4 @@ packer/ubuntu/output-ubuntu/*
 packer/manjaro/output-manjaro/*
 packer/coreos/output-coreos/*
 packer/flatcar/output-flatcar/*
+kubeone/addons/cni-cilium/charts/*

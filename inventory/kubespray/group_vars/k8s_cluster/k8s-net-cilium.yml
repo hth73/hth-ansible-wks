@@ -25,7 +25,7 @@ cilium_hubble_tls_generate: true
 
 cilium_ipam_mode: cluster-pool
 cilium_pool_cidr: "172.16.0.0/16"
-cilium_pool_mask_size: "23"
+cilium_pool_mask_size: "24"
 
 cilium_extra_values:
   devices:
@@ -33,6 +33,6 @@ cilium_extra_values:
   ipam:
     operator:
       clusterPoolIPv4PodCIDRList:
-        - "172.16.10.0/23"
-        - "172.16.20.0/23"
-        - "172.16.30.0/23"
+        - "172.16.10.0/24"
+        - "172.16.20.0/24"
+        - "172.16.30.0/24"
