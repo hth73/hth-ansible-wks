@@ -1,0 +1,72 @@
+apiVersion: kubeone.k8c.io/v1beta2
+kind: KubeOneCluster
+name: kubernetes
+
+# Kubernetes-Version
+versions:
+  kubernetes: v1.37.2
+
+# Cloud-Provider
+cloudProvider:
+  none: {}
+
+# Container Runtime
+containerRuntime:
+  containerd: {}
+
+# Cluster-Netzwerk
+clusterNetwork:
+  podSubnet: 172.20.0.0/16
+  serviceSubnet: 10.96.0.0/12
+  cni:
+    external: {}
+  kubeProxy:
+    skipInstallation: true
+
+# Control Plane
+controlPlane:
+  hosts:
+    - publicAddress: 192.168.56.10
+      privateAddress: 192.168.56.10
+      sshUsername: core
+      sshAgentSocket: env:SSH_AUTH_SOCK
+      taints:
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+
+# Statische Worker
+staticWorkers:
+  hosts:
+    - publicAddress: 192.168.56.13
+      privateAddress: 192.168.56.13
+      sshUsername: core
+      sshAgentSocket: env:SSH_AUTH_SOCK
+      labels:
+        node-role.kubernetes.io/worker: "true"
+
+    - publicAddress: 192.168.56.14
+      privateAddress: 192.168.56.14
+      sshUsername: core
+      sshAgentSocket: env:SSH_AUTH_SOCK
+      labels:
+        node-role.kubernetes.io/worker: "true"
+
+# Kubernetes API Endpoint
+apiEndpoint:
+  host: 192.168.56.10
+  port: 6443
+
+# Keine dynamische Node-Verwaltung
+machineController:
+  deploy: false
+
+# Kein Operating System Manager
+operatingSystemManager:
+  deploy: false
+
+# Kubernetes Addons
+features:
+  nodeLocalDNS:
+    deploy: true
+  metricsServer:
+    enable: true

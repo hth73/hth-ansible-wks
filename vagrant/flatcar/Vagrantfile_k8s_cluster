@@ -102,6 +102,9 @@ Vagrant.configure("2") do |config|
         vb.name   = name
         vb.memory = node_config[:memory]
         vb.cpus   = node_config[:cpus]
+
+        # Generate a unique MAC address for the NAT adapter
+        vb.customize ["modifyvm", :id, "--macaddress1", "auto"]
         vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
       end
     end

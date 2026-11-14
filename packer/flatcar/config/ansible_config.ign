@@ -54,6 +54,15 @@
           "source": "data:,REBOOT_STRATEGY%3Dreboot%0ALOCKSMITHD_REBOOT_WINDOW_START%3D%22Sun%2003%3A00%22%0ALOCKSMITHD_REBOOT_WINDOW_LENGTH%3D30m%0A"
         },
         "mode": 420
+      },
+      {
+        "overwrite": true,
+        "path": "/etc/crictl.yaml",
+        "contents": {
+          "compression": "gzip",
+          "source": "data:;base64,H4sIAAAAAAAC/5zNMQ6AIAxA0Z1TcAGtrr0NQiWN0hpoE49v3Jzd/vLzuotxo4mkXMpiGF34RgDoLpBVLLFQL5+ch+YjcEv1x/Zi6oZxXUKhzSvGPZ2DwhMAAP//mTvKwIkAAAA="
+        },
+        "mode": 420
       }
     ],
     "links": [
@@ -61,6 +70,22 @@
         "overwrite": true,
         "path": "/etc/localtime",
         "target": "../usr/share/zoneinfo/Europe/Berlin"
+      }
+    ]
+  },
+  "systemd": {
+    "units": [
+      {
+        "enabled": true,
+        "name": "containerd.service"
+      },
+      {
+        "mask": true,
+        "name": "docker.service"
+      },
+      {
+        "mask": true,
+        "name": "docker.socket"
       }
     ]
   }
