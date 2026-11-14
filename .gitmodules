@@ -1,3 +1,6 @@
 [submodule "kubespray/upstream"]
 	path = kubespray/upstream
 	url = https://github.com/kubernetes-sigs/kubespray.git
+[submodule "kubeone"]
+	path = kubeone
+	url = https://github.com/kubermatic/kubeone.git

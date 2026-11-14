@@ -12,6 +12,7 @@ packer/coreos/coreos-base.box
 packer/flatcar/flatcar-base.box
 vagrant/nixos/nixos-base.box
 ansible/.sops.yaml
+inventory/kubeone/addons/cni-cilium/cilium.yaml
 
 # Exclude Folder
 .git/
@@ -21,3 +22,4 @@ packer/manjaro/output-manjaro/*
 packer/coreos/output-coreos/*
 packer/flatcar/output-flatcar/*
 kubeone/addons/cni-cilium/charts/*
+inventory/kubeone/addons/cni-cilium/charts/*

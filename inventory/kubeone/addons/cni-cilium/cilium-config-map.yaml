@@ -6,8 +6,18 @@ metadata:
   name: cilium-config
   namespace: kube-system
 data:
-  agent-not-ready-taint-key: "node.cilium.io/agent-not-ready"
+  # My cilium configuration
   auto-direct-node-routes: "true"
+  cluster-name: kubernetes
+  devices: enp0s8
+  enable-wireguard: "true"
+  ipam: multi-pool
+  ipv4-native-routing-cidr: "172.20.0.0/16"
+  routing-mode: native
+  enable-ipv4-masquerade: "true"
+  egress-masquerade-interfaces: enp0s3
+  # Default Cilium configuration values
+  agent-not-ready-taint-key: "node.cilium.io/agent-not-ready"
   bpf-events-drop-enabled: "true"
   bpf-events-policy-verdict-enabled: "true"
   bpf-events-trace-enabled: "true"
@@ -22,24 +32,14 @@ data:
   cgroup-root: "/run/cilium/cgroupv2"
   cilium-endpoint-gc-interval: "5m0s"
   cluster-id: "0"
-  cluster-name: kubernetes
   clustermesh-default-global-namespace: "true"
   datapath-plugins-state-dir: "/var/run/cilium/plugins"
-  devices: "enp0s8"
   enable-datapath-plugins: "false"
   enable-dynamic-source-lookup-nodeport: "false"
   envoy-access-log-enabled: "true"
   envoy-node-locality-enabled: "false"
   envoy-xds-mode: "ads"
   proxy-cluster-max-pending-requests: "1024"
-{{ if .Config.ClusterNetwork.HasIPv4 }}
-  cluster-pool-ipv4-cidr: "{{ .Config.ClusterNetwork.PodSubnet }}"
-  cluster-pool-ipv4-mask-size: "{{ .Config.ClusterNetwork.NodeCIDRMaskSizeIPv4 }}"
-{{ end }}
-{{ if .Config.ClusterNetwork.HasIPv6 }}
-  cluster-pool-ipv6-cidr: "{{ .Config.ClusterNetwork.PodSubnetIPv6 }}"
-  cluster-pool-ipv6-mask-size: "{{ .Config.ClusterNetwork.NodeCIDRMaskSizeIPv6 }}"
-{{ end }}
   clustermesh-cache-ttl: 0s
   clustermesh-enable-endpoint-sync: "false"
   clustermesh-enable-mcs-api: "false"
@@ -64,7 +64,6 @@ data:
   enable-health-checking: "true"
   enable-hubble: "{{ .Config.ClusterNetwork.CNI.Cilium.EnableHubble }}"
   enable-ipv4-big-tcp: "false"
-  enable-ipv4-masquerade: "true"
   enable-ipv4: "true"
   enable-ipv6-big-tcp: "false"
   enable-ipv6-masquerade: "true"
@@ -113,7 +112,6 @@ data:
   identity-management-mode: agent
   install-no-conntrack-iptables-rules: "false"
   ipam-cilium-node-update-rate: 15s
-  ipam: cluster-pool
   iptables-random-fully: "false"
   k8s-require-ipv4-pod-cidr: "false"
   k8s-require-ipv6-pod-cidr: "false"

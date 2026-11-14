@@ -1,0 +1,75 @@
+cluster:
+  name: kubernetes
+
+devices:
+  - enp0s8
+
+k8sServiceHost: "192.168.56.10"
+k8sServicePort: "6443"
+
+egressMasqueradeInterfaces: enp0s3
+
+ipam:
+  mode: multi-pool
+  operator:
+    autoCreateCiliumPodIPPools:
+      master-pool:
+        ipv4:
+          cidrs:
+            - "172.20.10.0/24"
+          maskSize: 24
+      worker1-pool:
+        ipv4:
+          cidrs:
+            - "172.20.13.0/24"
+          maskSize: 24
+      worker2-pool:
+        ipv4:
+          cidrs:
+            - "172.20.14.0/24"
+          maskSize: 24
+
+kubeProxyReplacement: true
+
+routingMode: native
+ipv4NativeRoutingCIDR: "172.20.0.0/16"
+autoDirectNodeRoutes: true
+
+encryption:
+  enabled: true
+  type: wireguard
+
+cni:
+  exclusive: false
+
+preflight:
+  enabled: false
+
+l2announcements:
+  enabled: true
+
+operator:
+  enabled: true
+  replicas: 1
+  podDisruptionBudget:
+    enabled: true
+
+serviceAccounts:
+  hubblecertgen:
+    create: false
+  relay:
+    create: false
+  ui:
+    create: false
+
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+  tls:
+    enabled: true
+    auto:
+      enabled: true
+      method: helm
