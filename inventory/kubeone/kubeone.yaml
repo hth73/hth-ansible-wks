@@ -21,15 +21,15 @@ clusterNetwork:
   cni:
     cilium:
       kubeProxyReplacement: strict
-      enableHubble: true
+      enableHubble: false
   kubeProxy:
     skipInstallation: true
 
 # Control Plane
 controlPlane:
   hosts:
-    - publicAddress: 192.168.56.10
-      privateAddress: 192.168.56.10
+    - publicAddress: 192.168.178.210
+      privateAddress: 192.168.178.210
       sshUsername: core
       sshAgentSocket: env:SSH_AUTH_SOCK
       taints:
@@ -39,15 +39,15 @@ controlPlane:
 # Statische Worker
 staticWorkers:
   hosts:
-    - publicAddress: 192.168.56.13
-      privateAddress: 192.168.56.13
+    - publicAddress: 192.168.178.213
+      privateAddress: 192.168.178.213
       sshUsername: core
       sshAgentSocket: env:SSH_AUTH_SOCK
       labels:
         node-role.kubernetes.io/worker: "true"
 
-    - publicAddress: 192.168.56.14
-      privateAddress: 192.168.56.14
+    - publicAddress: 192.168.178.214
+      privateAddress: 192.168.178.214
       sshUsername: core
       sshAgentSocket: env:SSH_AUTH_SOCK
       labels:
@@ -55,7 +55,7 @@ staticWorkers:
 
 # Kubernetes API Endpoint
 apiEndpoint:
-  host: 192.168.56.10
+  host: 192.168.178.210
   port: 6443
 
 # Keine dynamische Node-Verwaltung
@@ -77,3 +77,34 @@ features:
 addons:
   enable: true
   path: ./addons
+
+# Cert-Manager
+helmReleases:
+  - releaseName: cert-manager
+    chart: cert-manager
+    repoURL: https://charts.jetstack.io
+    namespace: cert-manager
+    version: v1.21.3
+    wait: true
+    timeout: 10m
+    values:
+      - inline:
+          crds:
+            enabled: true
+            keep: true
+  - releaseName: traefik
+    chart: traefik
+    repoURL: https://traefik.github.io/charts
+    namespace: traefik
+    version: "42.4.0"
+    wait: true
+    timeout: 10m
+    values:
+      - valuesFile: inventory/kubeone/helm-values/traefik-values.yaml
+  - releaseName: metallb
+    chart: metallb
+    repoURL: https://metallb.github.io/metallb
+    namespace: metallb-system
+    version: "0.16.2"
+    wait: true
+    timeout: 10m

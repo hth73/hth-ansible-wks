@@ -86,6 +86,14 @@
       {
         "mask": true,
         "name": "docker.socket"
+      },
+      {
+        "enabled": true,
+        "name": "sshd.service"
+      },
+      {
+        "mask": true,
+        "name": "sshd.socket"
       }
     ]
   }

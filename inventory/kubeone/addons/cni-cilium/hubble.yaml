@@ -7,7 +7,7 @@ metadata:
   namespace: kube-system
 data:
   config.yaml: |
-    cluster-name: default
+    cluster-name: kubernetes
     peer-service: "hubble-peer.kube-system.svc.cluster.local.:443"
     listen-address: :4245
     gops: true
@@ -110,7 +110,6 @@ rules:
   - apiGroups:
       - ""
     resourceNames:
-      - hubble-server-certs
       - hubble-relay-client-certs
       - hubble-relay-server-certs
       - hubble-metrics-server-certs
@@ -190,7 +189,6 @@ rules:
   - apiGroups:
       - ""
     resourceNames:
-      - hubble-server-certs
       - hubble-relay-client-certs
       - hubble-relay-server-certs
       - hubble-metrics-server-certs
@@ -526,17 +524,6 @@ spec:
                 - name: CILIUM_CERTGEN_CONFIG
                   value: |
                     certs:
-                    - name: hubble-server-certs
-                      namespace: kube-system
-                      commonName: "*.default.hubble-grpc.cilium.io"
-                      hosts:
-                      - "*.default.hubble-grpc.cilium.io"
-                      usage:
-                      - signing
-                      - key encipherment
-                      - server auth
-                      - client auth
-                      validity: 8760h
                     - name: hubble-relay-client-certs
                       namespace: kube-system
                       commonName: "*.hubble-relay.cilium.io"
@@ -594,17 +581,6 @@ spec:
             - name: CILIUM_CERTGEN_CONFIG
               value: |
                 certs:
-                - name: hubble-server-certs
-                  namespace: kube-system
-                  commonName: "*.default.hubble-grpc.cilium.io"
-                  hosts:
-                  - "*.default.hubble-grpc.cilium.io"
-                  usage:
-                  - signing
-                  - key encipherment
-                  - server auth
-                  - client auth
-                  validity: 8760h
                 - name: hubble-relay-client-certs
                   namespace: kube-system
                   commonName: "*.hubble-relay.cilium.io"

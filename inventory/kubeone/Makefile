@@ -91,7 +91,7 @@ preflight:
 	echo "Loading SSH key into agent..."; \
 	ssh-add "$(SSH_KEY)"; \
 	echo "Checking SSH and sudo on all nodes..."; \
-	for ip in 192.168.56.10 192.168.56.13 192.168.56.14; do \
+	for ip in 192.168.178.210 192.168.178.213 192.168.178.214; do \
 		echo "=== $$ip ==="; \
 		ssh -o BatchMode=yes \
 		    -o ConnectTimeout=10 \

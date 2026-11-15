@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export KUBECONFIG="../kubernetes-kubeconfig"
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+
+ROOT_CA_SECRET="k8s-root-ca-secret"
+SUB_CA_SECRET="k8s-sub-ca-secret"
+NAMESPACE="cert-manager"
+SYSTEM_CA_DIR="/usr/share/ca-certificates"
+LOCAL_CA_DIR="/usr/local/share/ca-certificates"
+
+ROOT_CA_FILE="$REPO_ROOT/k8s-root-ca.crt"
+SUB_CA_FILE="$REPO_ROOT/k8s-sub-ca.crt"
+
+tmp_dir="$(mktemp -d)"
+trap 'rm -rf "$tmp_dir"' EXIT
+
+export_cert() {
+  local secret="$1"
+  local output="$2"
+
+  kubectl get secret "$secret" -n "$NAMESPACE" \
+    -o jsonpath='{.data.tls\.crt}' |
+    base64 --decode > "$output"
+
+  if [[ ! -s "$output" ]]; then
+    echo "[ERROR] Certificate from secret '$secret' is empty." >&2
+    exit 1
+  fi
+}
+
+echo "[INFO] Exporting Root CA"
+export_cert "$ROOT_CA_SECRET" "$tmp_dir/k8s-root-ca.crt"
+
+echo "[INFO] Exporting Sub-CA"
+export_cert "$SUB_CA_SECRET" "$tmp_dir/k8s-sub-ca.crt"
+
+echo "[INFO] Copying CA certificates to repository root"
+install -m 0644 "$tmp_dir/k8s-root-ca.crt" "$ROOT_CA_FILE"
+install -m 0644 "$tmp_dir/k8s-sub-ca.crt" "$SUB_CA_FILE"
+
+echo "[INFO] Installing CA certificates into both Ubuntu trust-store locations"
+for target_dir in "$SYSTEM_CA_DIR" "$LOCAL_CA_DIR"; do
+  sudo install -D -m 0644 "$tmp_dir/k8s-root-ca.crt" \
+    "$target_dir/k8s-root-ca.crt"
+  sudo install -D -m 0644 "$tmp_dir/k8s-sub-ca.crt" \
+    "$target_dir/k8s-sub-ca.crt"
+done
+
+echo "[INFO] Updating CA certificate store"
+sudo update-ca-certificates
+
+echo "[INFO] CA certificates exported to:"
+echo "  $ROOT_CA_FILE"
+echo "  $SUB_CA_FILE"
+echo "[INFO] CA certificate installation completed"

@@ -1,9 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-resources:
-  - node-configs.yaml
-
 # Do not set a top-level namespace: the namespace transformer would also move
 # the chart's cilium-secrets Namespace, Roles and RoleBindings into kube-system,
 # granting Cilium access to all kube-system Secrets. The chart already renders
@@ -29,6 +26,8 @@ patches:
         path: /apiVersion
         value: policy/v1
 
+  # Replace the agent and init-container images with KubeOne-managed images.
+  # Hubble-specific hostPort and TLS volume patches are intentionally absent.
   - patch: |-
       apiVersion: apps/v1
       kind: DaemonSet
@@ -41,15 +40,6 @@ patches:
             containers:
               - name: cilium-agent
                 image: '{{ .InternalImages.Get "Cilium" }}'
-                ports:
-                  - containerPort: 4244
-                    hostPort: 4244
-                    name: peer-service
-                    protocol: TCP
-                volumeMounts:
-                  - name: hubble-tls
-                    mountPath: /var/lib/cilium/tls/hubble
-                    readOnly: true
             initContainers:
               - name: config
                 image: '{{ .InternalImages.Get "Cilium" }}'
@@ -63,21 +53,6 @@ patches:
                 image: '{{ .InternalImages.Get "Cilium" }}'
               - name: install-cni-binaries
                 image: '{{ .InternalImages.Get "Cilium" }}'
-            volumes:
-              - name: hubble-tls
-                projected:
-                  defaultMode: 256
-                  sources:
-                    - secret:
-                        name: hubble-server-certs
-                        optional: true
-                        items:
-                          - key: tls.crt
-                            path: server.crt
-                          - key: tls.key
-                            path: server.key
-                          - key: ca.crt
-                            path: client-ca.crt
 
   - patch: |-
       apiVersion: apps/v1

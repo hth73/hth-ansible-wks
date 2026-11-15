@@ -95,14 +95,6 @@ data:
   envoy-base-id: "0"
   envoy-keep-cap-netbindservice: "false"
   external-envoy-proxy: "true"
-  hubble-disable-tls: "false"
-  hubble-export-file-max-backups: "5"
-  hubble-export-file-max-size-mb: "10"
-  hubble-listen-address: ":4244"
-  hubble-socket-path: "/var/run/cilium/hubble.sock"
-  hubble-tls-cert-file: /var/lib/cilium/tls/hubble/server.crt
-  hubble-tls-client-ca-files: /var/lib/cilium/tls/hubble/client-ca.crt
-  hubble-tls-key-file: /var/lib/cilium/tls/hubble/server.key
   health-check-icmp-failure-threshold: "3"
   http-retry-count: "3"
   http-stream-idle-timeout: "300"

@@ -1,0 +1,117 @@
+# ---------------------------------------------------------------------------
+# Define variables for the Vagrant VMs
+# ---------------------------------------------------------------------------
+NODES = {
+  "flatcar-master1" => {
+    ip: "192.168.178.210",
+    memory: 8192,
+    cpus: 2
+  },
+#  "flatcar-master2" => {
+#    ip: "192.168.178.211",
+#    memory: 8192,
+#    cpus: 2
+#  },
+#  "flatcar-master3" => {
+#    ip: "192.168.178.212",
+#    memory: 8192,
+#    cpus: 2
+#  },
+  "flatcar-worker1" => {
+    ip: "192.168.178.213",
+    memory: 4096,
+    cpus: 2
+  },
+  "flatcar-worker2" => {
+    ip: "192.168.178.214",
+    memory: 4096,
+    cpus: 2
+  }#,
+#  "flatcar-worker3" => {
+#    ip: "192.168.178.215",
+#    memory: 4096,
+#    cpus: 2
+#  }
+}
+
+# ---------------------------------------------------------------------------
+# Configure the bridged LAN interface
+# ---------------------------------------------------------------------------
+def configure_bridged_network(node, ip)
+  node.vm.provision "shell",
+    inline: <<-SHELL,
+      set -e
+
+      install -d -m 0755 /etc/systemd/network
+
+      cat > /etc/systemd/network/10-bridged.network <<EOF
+[Match]
+Name=enp0s8
+
+[Network]
+Address=#{ip}/24
+EOF
+
+      networkctl reload
+      networkctl reconfigure enp0s8
+
+      ip -4 addr show enp0s8
+    SHELL
+    privileged: true
+end
+
+# ---------------------------------------------------------------------------
+# Vagrant Configuration
+# ---------------------------------------------------------------------------
+Vagrant.configure("2") do |config|
+  # -------------------------------------------------------------------------
+  # Global Settings
+  # -------------------------------------------------------------------------
+  config.vm.box              = "flatcar-base"
+  config.vm.box_check_update = false
+
+  config.ssh.username          = "core"
+  config.ssh.private_key_path = File.join(__dir__, "../../secrets/ssh/id_ed25519")
+  config.ssh.insert_key        = false
+
+  # Disable default /vagrant shared folder
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  # Disable fstab modification
+  config.vm.allow_fstab_modification = false
+
+  # Wait up to 120 seconds for graceful guest shutdown
+  config.vm.graceful_halt_timeout = 120
+
+  # -------------------------------------------------------------------------
+  # Kubernetes Nodes
+  # -------------------------------------------------------------------------
+  NODES.each do |name, node_config|
+    config.vm.define name do |node|
+      node.vm.hostname = name
+
+      # Adapter 1: NAT
+      node.vm.network "forwarded_port",
+        guest: 22,
+        host: 2222,
+        id: "ssh",
+        auto_correct: true
+
+      # Adapter 2: Bridged LAN
+      node.vm.network "public_network",
+        bridge: "enx00e04c7030d9",
+        auto_config: false
+
+      configure_bridged_network(node, node_config[:ip])
+
+      # VirtualBox Provider
+      node.vm.provider "virtualbox" do |vb|
+        vb.name   = name
+        vb.memory = node_config[:memory]
+        vb.cpus   = node_config[:cpus]
+
+        vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+      end
+    end
+  end
+end

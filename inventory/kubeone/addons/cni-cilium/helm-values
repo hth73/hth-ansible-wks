@@ -4,7 +4,7 @@ cluster:
 devices:
   - enp0s8
 
-k8sServiceHost: "192.168.56.10"
+k8sServiceHost: "192.168.178.210"
 k8sServicePort: "6443"
 
 egressMasqueradeInterfaces: enp0s3
@@ -16,17 +16,17 @@ ipam:
       master-pool:
         ipv4:
           cidrs:
-            - "172.20.10.0/24"
+            - "172.20.210.0/24"
           maskSize: 24
       worker1-pool:
         ipv4:
           cidrs:
-            - "172.20.13.0/24"
+            - "172.20.213.0/24"
           maskSize: 24
       worker2-pool:
         ipv4:
           cidrs:
-            - "172.20.14.0/24"
+            - "172.20.214.0/24"
           maskSize: 24
 
 kubeProxyReplacement: true
@@ -38,6 +38,7 @@ autoDirectNodeRoutes: true
 encryption:
   enabled: true
   type: wireguard
+  nodeEncryption: true
 
 cni:
   exclusive: false
@@ -45,31 +46,17 @@ cni:
 preflight:
   enabled: false
 
+enableLBIPAM: false
+
 l2announcements:
-  enabled: true
+  enabled: false
 
 operator:
   enabled: true
   replicas: 1
+  skipCRDCreation: true
   podDisruptionBudget:
     enabled: true
 
-serviceAccounts:
-  hubblecertgen:
-    create: false
-  relay:
-    create: false
-  ui:
-    create: false
-
 hubble:
-  enabled: true
-  relay:
-    enabled: true
-  ui:
-    enabled: true
-  tls:
-    enabled: true
-    auto:
-      enabled: true
-      method: helm
+  enabled: false

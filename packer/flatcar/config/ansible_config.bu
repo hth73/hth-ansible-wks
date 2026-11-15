@@ -78,3 +78,11 @@ systemd:
     # Verhindert eine Aktivierung über den Docker-Socket
     - name: docker.socket
       mask: true
+    
+    # start the sshd.service to resolve the issue
+    - name: sshd.service
+      enabled: true
+
+    # Disable the sshd.socket service due to long wait times for SSH connections
+    - name: sshd.socket
+      mask: true
