@@ -16,6 +16,7 @@ vagrant/nixos/nixos-base.box
 vagrant/flatcar/*.txt
 ansible/.sops.yaml
 inventory/kubeone/addons/cni-cilium/cilium.yaml
+cni-cilium/*
 
 # Exclude Folder
 .git/

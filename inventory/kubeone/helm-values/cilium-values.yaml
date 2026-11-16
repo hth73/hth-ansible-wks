@@ -38,7 +38,7 @@ autoDirectNodeRoutes: true
 encryption:
   enabled: true
   type: wireguard
-  nodeEncryption: true
+  nodeEncryption: false
 
 cni:
   exclusive: false

@@ -19,9 +19,7 @@ clusterNetwork:
   podSubnet: 172.20.0.0/16
   serviceSubnet: 10.96.0.0/12
   cni:
-    cilium:
-      kubeProxyReplacement: strict
-      enableHubble: false
+    external: {}
   kubeProxy:
     skipInstallation: true
 
@@ -80,6 +78,15 @@ addons:
 
 # Cert-Manager
 helmReleases:
+  - releaseName: cilium
+    chart: cilium
+    repoURL: https://helm.cilium.io/
+    namespace: kube-system
+    version: "1.20.4"
+    wait: true
+    timeout: 10m
+    values:
+      - valuesFile: inventory/kubeone/helm-values/cilium-values.yaml
   - releaseName: cert-manager
     chart: cert-manager
     repoURL: https://charts.jetstack.io
