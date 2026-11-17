@@ -1,0 +1,4 @@
+nodes:
+  flatcar-master1: master-pool
+  flatcar-worker1: worker1-pool
+  flatcar-worker2: worker2-pool

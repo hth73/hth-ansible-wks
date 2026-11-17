@@ -71,13 +71,12 @@ features:
   metricsServer:
     enable: true
 
-# Kubernetes addons
-addons:
-  enable: true
-  path: ./addons
-
-# Cert-Manager
 helmReleases:
+  - releaseName: cilium-node-ipam
+    chart: "./helm/charts/cilium-node-ipam"
+    namespace: kube-system
+    wait: true
+    timeout: 2m
   - releaseName: cilium
     chart: cilium
     repoURL: https://helm.cilium.io/
@@ -86,32 +85,4 @@ helmReleases:
     wait: true
     timeout: 10m
     values:
-      - valuesFile: inventory/kubeone/helm-values/cilium-values.yaml
-  - releaseName: cert-manager
-    chart: cert-manager
-    repoURL: https://charts.jetstack.io
-    namespace: cert-manager
-    version: v1.21.3
-    wait: true
-    timeout: 10m
-    values:
-      - inline:
-          crds:
-            enabled: true
-            keep: true
-  - releaseName: traefik
-    chart: traefik
-    repoURL: https://traefik.github.io/charts
-    namespace: traefik
-    version: "42.4.0"
-    wait: true
-    timeout: 10m
-    values:
-      - valuesFile: inventory/kubeone/helm-values/traefik-values.yaml
-  - releaseName: metallb
-    chart: metallb
-    repoURL: https://metallb.github.io/metallb
-    namespace: metallb-system
-    version: "0.16.2"
-    wait: true
-    timeout: 10m
+      - valuesFile: "./helm/values/cilium.yaml"

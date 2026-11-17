@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-# Prüft alle laufenden Vagrant-Flatcar-VMs (3 bis 6 Nodes).
-# Erwartet pro VM eine Host-only-Adresse im Netz 192.168.56.0/24.
-# Das Skript verändert keine Systemeinstellungen. Es prüft insbesondere,
-# ob sshd.socket deaktiviert und sshd.service aktiviert/laufend ist.
+# Prüft alle Vagrant-Flatcar-VMs (3 bis 6 Nodes) vor der KubeOne-Installation.
+# Erwartet pro VM eine feste Adresse im Bridged-LAN 192.168.178.0/24 auf enp0s8.
+# Das Skript verändert keine Systemeinstellungen. Es prüft u. a. Hostname,
+# Netzwerk, SSH-Dienste, containerd, cgroup v2, WireGuard und die Erreichbarkeit
+# der Nodes untereinander.
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 cd "$SCRIPT_DIR" || exit 1
@@ -13,6 +14,23 @@ SSH_USER="${SSH_USER:-core}"
 SSH_CHECK_RUNS="${SSH_CHECK_RUNS:-3}"
 SSH_CONNECT_TIMEOUT="${SSH_CONNECT_TIMEOUT:-10}"
 SSH_KEY="${SSH_KEY:-$SCRIPT_DIR/../../secrets/ssh/id_ed25519}"
+
+# direnv greift in Skripten nicht -> Vagrantfile explizit setzen
+export VAGRANT_VAGRANTFILE="${VAGRANT_VAGRANTFILE:-Vagrantfile_k8s_cluster}"
+
+# Cluster-Netz (Bridged) und Interface, auf dem KubeOne/Cilium arbeiten
+NODE_IF="${NODE_IF:-enp0s8}"
+NODE_NET_PREFIX="${NODE_NET_PREFIX:-192.168.178.}"
+
+# Soll-IPs je Node (wie im Vagrantfile / kubeone.yaml)
+declare -A EXPECTED_IPS=(
+    [flatcar-master1]=192.168.178.210
+    [flatcar-master2]=192.168.178.211
+    [flatcar-master3]=192.168.178.212
+    [flatcar-worker1]=192.168.178.213
+    [flatcar-worker2]=192.168.178.214
+    [flatcar-worker3]=192.168.178.215
+)
 
 FAILURES=0
 CHECKS=0
@@ -38,7 +56,7 @@ else
     info "SSH-Key nicht unter '$SSH_KEY' gefunden; verwende SSH-Agent/Standard-Identitäten."
 fi
 
-printf '\n========== Vagrant-VMs erkennen ==========\n'
+printf '\n========== Vagrant-VMs erkennen (%s) ==========\n' "$VAGRANT_VAGRANTFILE"
 # Vagrant liefert pro Maschine eine Zeile: timestamp,machine,state,running|poweroff|...
 declare -a NODES=()
 declare -A NODE_STATES=()
@@ -62,9 +80,11 @@ if (( NODE_COUNT == 0 )); then
 fi
 
 # Ein Remote-Aufruf pro VM: Basisdaten und Sollzustand der Services prüfen.
+# NODE_IF wird vor dem Heredoc gesetzt, da dieser nicht expandiert wird.
 read -r -d '' REMOTE_CHECK <<'REMOTE' || true
 set +e
 failures=0
+NODE_IF="${NODE_IF:-enp0s8}"
 
 check_unit() {
     unit="$1"
@@ -82,15 +102,25 @@ check_unit() {
 }
 
 printf '%s\n' '--- Hostname / Betriebssystem ---'
-hostnamectl --static 2>/dev/null || hostname
+printf 'NODE_HOSTNAME=%s\n' "$(hostnamectl --static 2>/dev/null || hostname)"
 sed -n -E '/^(NAME|VERSION)=/p' /etc/os-release
+printf 'Kernel: %s\n' "$(uname -r)"
 
-printf '%s\n' '--- Host-only-IP ---'
-ip -o -4 addr show | awk '{split($4,a,"/"); if (index(a[1],"192.168.56.")==1) {print "HOSTONLY_IP=" a[1]; found=1; exit}} END {if (!found) print "HOSTONLY_IP="}'
+printf '%s\n' "--- Cluster-IP auf $NODE_IF ---"
+printf 'NODE_IP=%s\n' "$(ip -o -4 addr show dev "$NODE_IF" 2>/dev/null | awk '{split($4,a,"/"); print a[1]; exit}')"
+printf 'NODE_MAC=%s\n' "$(cat /sys/class/net/"$NODE_IF"/address 2>/dev/null)"
+if [[ "$(cat /sys/class/net/"$NODE_IF"/operstate 2>/dev/null)" == up ]]; then
+    printf '[PASS] %s ist up\n' "$NODE_IF"
+else
+    printf '[FAIL] %s ist nicht up\n' "$NODE_IF"
+    failures=$((failures + 1))
+fi
 
 printf '%s\n' '--- Netzwerk ---'
 ip -br -4 addr
 ip route
+default_if="$(ip -4 route show default | awk '{for (i=1;i<=NF;i++) if ($i=="dev") {print $(i+1); exit}}')"
+printf '[INFO] Default-Route ueber: %s (Cilium egressMasqueradeInterfaces erwartet enp0s3)\n' "${default_if:-keine}"
 
 printf '%s\n' '--- CPU / RAM ---'
 printf 'CPU: '; nproc
@@ -105,12 +135,24 @@ else
     failures=$((failures + 1))
 fi
 
-printf '%s\n' '--- MAC-Adressen / Product UUID ---'
-ip -o link show
-if [[ -r /sys/class/dmi/id/product_uuid ]]; then
-    cat /sys/class/dmi/id/product_uuid
+printf '%s\n' '--- Product UUID / Machine ID (muessen je Node eindeutig sein) ---'
+printf 'PRODUCT_UUID=%s\n' "$(sudo -n cat /sys/class/dmi/id/product_uuid 2>/dev/null)"
+printf 'MACHINE_ID=%s\n' "$(cat /etc/machine-id 2>/dev/null)"
+
+printf '%s\n' '--- Zeit-Synchronisation ---'
+if [[ "$(timedatectl show -p NTPSynchronized --value 2>/dev/null)" == yes ]]; then
+    printf '%s\n' '[PASS] Zeit ist synchronisiert'
 else
-    printf '%s\n' '[WARN] Product UUID nicht lesbar'
+    printf '%s\n' '[FAIL] Zeit ist nicht synchronisiert (Zertifikate/etcd!)'
+    failures=$((failures + 1))
+fi
+
+printf '%s\n' '--- WireGuard (Cilium-Verschluesselung) ---'
+if lsmod | grep -q '^wireguard' || modinfo wireguard >/dev/null 2>&1; then
+    printf '%s\n' '[PASS] WireGuard-Kernelmodul verfuegbar'
+else
+    printf '%s\n' '[FAIL] WireGuard-Kernelmodul nicht verfuegbar'
+    failures=$((failures + 1))
 fi
 
 printf '%s\n' '--- Sudo ---'
@@ -178,7 +220,7 @@ exit "$failures"
 REMOTE
 
 # Ergebnisse pro Node sammeln.
-declare -A NODE_IPS=()
+declare -A NODE_IPS=() NODE_MACS=() NODE_UUIDS=() NODE_MIDS=()
 for node in "${NODES[@]}"; do
     printf '\n========== %s (%s) ==========\n' "$node" "${NODE_STATES[$node]}"
     if [[ "${NODE_STATES[$node]}" != "running" ]]; then
@@ -186,17 +228,36 @@ for node in "${NODES[@]}"; do
         continue
     fi
 
-    remote_output="$(vagrant ssh "$node" -c "$REMOTE_CHECK" 2>&1)"
+    remote_output="$(vagrant ssh "$node" -c "NODE_IF=$NODE_IF; $REMOTE_CHECK" 2>&1)"
     remote_rc=$?
     printf '%s\n' "$remote_output"
 
-    ip="$(printf '%s\n' "$remote_output" | sed -n 's/^HOSTONLY_IP=//p' | tail -n 1 | tr -d '\r')"
+    field() { printf '%s\n' "$remote_output" | sed -n "s/^$1=//p" | tail -n 1 | tr -d '\r'; }
+
+    remote_hostname="$(field NODE_HOSTNAME)"
+    if [[ "$remote_hostname" == "$node" ]]; then
+        pass "$node: Hostname passt"
+    else
+        fail "$node: Hostname ist '$remote_hostname' (CiliumNodeConfig matcht auf kubernetes.io/hostname=$node)"
+    fi
+
+    ip="$(field NODE_IP)"
+    expected="${EXPECTED_IPS[$node]:-}"
     if [[ -z "$ip" ]]; then
-        fail "$node: keine Host-only-IP im Netz 192.168.56.x gefunden"
+        fail "$node: keine IPv4-Adresse auf $NODE_IF"
+    elif [[ "$ip" != "$NODE_NET_PREFIX"* ]]; then
+        fail "$node: $NODE_IF hat $ip, erwartet Netz ${NODE_NET_PREFIX}x"
+    elif [[ -n "$expected" && "$ip" != "$expected" ]]; then
+        fail "$node: $NODE_IF hat $ip, erwartet $expected"
+        NODE_IPS["$node"]="$ip"
     else
         NODE_IPS["$node"]="$ip"
-        pass "$node Host-only-IP: $ip"
+        pass "$node: $NODE_IF-IP $ip"
     fi
+
+    NODE_MACS["$node"]="$(field NODE_MAC)"
+    NODE_UUIDS["$node"]="$(field PRODUCT_UUID)"
+    NODE_MIDS["$node"]="$(field MACHINE_ID)"
 
     remote_failures="$(printf '%s\n' "$remote_output" | sed -n 's/^REMOTE_CHECK_FAILURES=//p' | tail -n 1 | tr -d '\r')"
     if [[ "$remote_rc" -eq 0 && "$remote_failures" == "0" ]]; then
@@ -206,6 +267,22 @@ for node in "${NODES[@]}"; do
     fi
 
 done
+
+printf '\n========== Eindeutigkeit (MAC / Product UUID / Machine ID) ==========\n'
+check_unique() {
+    local label="$1"; shift
+    local -n values="$1"
+    local dups
+    dups="$(for n in "${!values[@]}"; do [[ -n "${values[$n]}" ]] && printf '%s\n' "${values[$n]}"; done | sort | uniq -d)"
+    if [[ -z "$dups" ]]; then
+        pass "$label eindeutig"
+    else
+        fail "$label doppelt vergeben: $(echo $dups)"
+    fi
+}
+check_unique "MAC auf $NODE_IF" NODE_MACS
+check_unique "Product UUID" NODE_UUIDS
+check_unique "Machine ID" NODE_MIDS
 
 printf '\n========== VirtualBox-Netzwerk ==========\n'
 if command -v VBoxManage >/dev/null 2>&1; then
@@ -248,16 +325,33 @@ for node in "${NODES[@]}"; do
 
 done
 
-printf '\n========== Ping / Host-only-Netz ==========\n'
+printf '\n========== Ping vom Host (%s) ==========\n' "$NODE_IF"
 for node in "${NODES[@]}"; do
     ip="${NODE_IPS[$node]:-}"
     [[ -n "$ip" ]] || continue
-    printf '\n--- %s (%s) ---\n' "$node" "$ip"
-    if ping -c 3 -W 2 "$ip"; then
-        pass "$node: Ping erreichbar"
+    if ping -c 3 -W 2 "$ip" >/dev/null; then
+        pass "$node ($ip): Ping vom Host erreichbar"
     else
-        fail "$node: Ping fehlgeschlagen"
+        fail "$node ($ip): Ping vom Host fehlgeschlagen"
     fi
+done
+
+printf '\n========== Ping zwischen den Nodes (%s) ==========\n' "$NODE_IF"
+# Wichtig fuer Native Routing: jeder Node muss jeden anderen direkt ueber
+# das Bridged-LAN erreichen.
+for src in "${NODES[@]}"; do
+    src_ip="${NODE_IPS[$src]:-}"
+    [[ -n "$src_ip" ]] || continue
+    for dst in "${NODES[@]}"; do
+        [[ "$src" == "$dst" ]] && continue
+        dst_ip="${NODE_IPS[$dst]:-}"
+        [[ -n "$dst_ip" ]] || continue
+        if ssh "${SSH_ARGS[@]}" "$SSH_USER@$src_ip" "ping -c 2 -W 2 -I $NODE_IF $dst_ip >/dev/null" 2>/dev/null; then
+            pass "$src -> $dst ($dst_ip)"
+        else
+            fail "$src -> $dst ($dst_ip) nicht erreichbar"
+        fi
+    done
 done
 
 printf '\n========== Zusammenfassung ==========\n'

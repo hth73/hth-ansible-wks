@@ -3,48 +3,48 @@
 # ---------------------------------------------------------------------------
 NODES = {
   "flatcar-master1" => {
-    ip: "192.168.56.10",
+    ip: "192.168.178.210",
     memory: 8192,
     cpus: 2
   },
-#   "flatcar-master2" => {
-#     ip: "192.168.56.11",
-#     memory: 8192,
-#     cpus: 2
-#   },
-#   "flatcar-master3" => {
-#     ip: "192.168.56.12",
-#     memory: 8192,
-#     cpus: 2
-#   },
+#  "flatcar-master2" => {
+#    ip: "192.168.178.211",
+#    memory: 8192,
+#    cpus: 2
+#  },
+#  "flatcar-master3" => {
+#    ip: "192.168.178.212",
+#    memory: 8192,
+#    cpus: 2
+#  },
   "flatcar-worker1" => {
-    ip: "192.168.56.13",
+    ip: "192.168.178.213",
     memory: 4096,
     cpus: 2
   },
   "flatcar-worker2" => {
-    ip: "192.168.56.14",
+    ip: "192.168.178.214",
     memory: 4096,
     cpus: 2
   }#,
 #  "flatcar-worker3" => {
-#    ip: "192.168.56.15",
+#    ip: "192.168.178.215",
 #    memory: 4096,
 #    cpus: 2
 #  }
 }
 
 # ---------------------------------------------------------------------------
-# Set up a host-only network for the Vagrant VMs
+# Configure the bridged LAN interface
 # ---------------------------------------------------------------------------
-def configure_hostonly_network(node, ip)
+def configure_bridged_network(node, ip)
   node.vm.provision "shell",
     inline: <<-SHELL,
       set -e
 
       install -d -m 0755 /etc/systemd/network
 
-      cat > /etc/systemd/network/10-hostonly.network <<EOF
+      cat > /etc/systemd/network/10-bridged.network <<EOF
 [Match]
 Name=enp0s8
 
@@ -70,9 +70,9 @@ Vagrant.configure("2") do |config|
   config.vm.box              = "flatcar-base"
   config.vm.box_check_update = false
 
-  config.ssh.username         = "core"
+  config.ssh.username          = "core"
   config.ssh.private_key_path = File.join(__dir__, "../../secrets/ssh/id_ed25519")
-  config.ssh.insert_key       = false
+  config.ssh.insert_key        = false
 
   # Disable default /vagrant shared folder
   config.vm.synced_folder ".", "/vagrant", disabled: true
@@ -90,12 +90,19 @@ Vagrant.configure("2") do |config|
     config.vm.define name do |node|
       node.vm.hostname = name
 
-      # Host-only Network
-      node.vm.network "private_network",
-        ip: node_config[:ip],
+      # Adapter 1: NAT
+      node.vm.network "forwarded_port",
+        guest: 22,
+        host: 2222,
+        id: "ssh",
+        auto_correct: true
+
+      # Adapter 2: Bridged LAN
+      node.vm.network "public_network",
+        bridge: "enx00e04c7030d9",
         auto_config: false
 
-      configure_hostonly_network(node, node_config[:ip])
+      configure_bridged_network(node, node_config[:ip])
 
       # VirtualBox Provider
       node.vm.provider "virtualbox" do |vb|
@@ -103,8 +110,6 @@ Vagrant.configure("2") do |config|
         vb.memory = node_config[:memory]
         vb.cpus   = node_config[:cpus]
 
-        # Generate a unique MAC address for the NAT adapter
-        vb.customize ["modifyvm", :id, "--macaddress1", "auto"]
         vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
       end
     end

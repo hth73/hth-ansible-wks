@@ -9,6 +9,9 @@ k8sServicePort: "6443"
 
 egressMasqueradeInterfaces: enp0s3
 
+# multi-pool: ein festes /24 pro Node. Welcher Node welchen Pool bekommt,
+# steht in charts/cilium-node-ipam (CiliumNodeConfig). Die Pool-Namen dort
+# muessen zu den Namen hier passen.
 ipam:
   mode: multi-pool
   operator:
@@ -54,7 +57,7 @@ l2announcements:
 operator:
   enabled: true
   replicas: 1
-  skipCRDCreation: true
+  # CRDs legt der Operator passend zur Cilium-Version an (nicht skippen).
   podDisruptionBudget:
     enabled: true
 

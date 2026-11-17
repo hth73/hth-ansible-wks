@@ -1,170 +1,102 @@
-
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# Kubernetes homelab lifecycle management
-# Flatcar / Kubespray / Cilium / Vagrant
+# Kubernetes-Homelab sauber herunterfahren und wieder starten.
+# Flatcar / KubeOne / Cilium / Vagrant (Bridged LAN)
+#
+#   ./lab-cluster.sh down     Nodes cordonen, Worker und danach Master herunterfahren
+#   ./lab-cluster.sh up       Master starten, Worker starten, Nodes uncordonen
+#   ./lab-cluster.sh status   VM- und Node-Status anzeigen
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd -P)"
 
 MASTER="flatcar-master1"
 WORKERS=("flatcar-worker1" "flatcar-worker2")
 
-MASTER_IP="192.168.56.10"
-WORKER_IPS=("192.168.56.13" "192.168.56.14")
+MASTER_IP="192.168.178.210"
+WORKER_IPS=("192.168.178.213" "192.168.178.214")
 
-SSH_USER="core"
-SSH_OPTS=(-o ConnectTimeout=5 -o BatchMode=yes)
+SSH_USER="${SSH_USER:-core}"
+SSH_KEY="${SSH_KEY:-$REPO_ROOT/secrets/ssh/id_ed25519}"
+SSH_OPTS=(-o ConnectTimeout=5 -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o LogLevel=ERROR)
+[[ -r "$SSH_KEY" ]] && SSH_OPTS+=(-i "$SSH_KEY" -o IdentitiesOnly=yes)
 
-CILIUM_NAMESPACE="kube-system"
-CILIUM_DEPLOYMENT="cilium-operator"
-CILIUM_LABEL="io.cilium/app=operator"
+# direnv greift in Skripten nicht -> Vagrantfile und Kubeconfig explizit setzen
+export VAGRANT_VAGRANTFILE="${VAGRANT_VAGRANTFILE:-Vagrantfile_k8s_cluster}"
+export KUBECONFIG="${KUBECONFIG:-$REPO_ROOT/inventory/kubeone/kubernetes-kubeconfig}"
 
-ORIGINAL_REPLICAS_FILE=".lab-cilium-replicas"
+ALL_NODES=("$MASTER" "${WORKERS[@]}")
+NODE_COUNT=${#ALL_NODES[@]}
 
-log() {
-    printf '\n[%s] %s\n' "$(date '+%H:%M:%S')" "$*"
-}
+log() { printf '\n[%s] %s\n' "$(date '+%H:%M:%S')" "$*"; }
+die() { echo "ERROR: $*" >&2; exit 1; }
 
-die() {
-    echo "ERROR: $*" >&2
-    exit 1
+require() {
+    local cmd
+    for cmd in "$@"; do
+        command -v "$cmd" >/dev/null 2>&1 || die "$cmd fehlt."
+    done
 }
 
 ssh_node() {
-    local ip="$1"
-    shift
+    local ip="$1"; shift
     ssh "${SSH_OPTS[@]}" "${SSH_USER}@${ip}" "$@"
 }
 
-wait_ssh_down() {
-    local ip="$1"
-    local timeout=120
-    local elapsed=0
+# VirtualBox-Status einer VM laut Vagrant (running, poweroff, aborted, ...)
+vm_state() {
+    vagrant status "$1" --machine-readable 2>/dev/null |
+        awk -F, '$3 == "state" {print $4}' | tail -n 1
+}
+
+wait_vm_poweroff() {
+    local name="$1" timeout=180 elapsed=0
     while (( elapsed < timeout )); do
-        if ! ssh_node "$ip" true >/dev/null 2>&1; then
-            log "$ip ist heruntergefahren."
+        if [[ "$(vm_state "$name")" == "poweroff" ]]; then
+            log "$name ist ausgeschaltet."
             return 0
         fi
-        sleep 2
-        ((elapsed+=2))
+        sleep 3
+        elapsed=$((elapsed + 3))
     done
-    die "Timeout beim Herunterfahren von $ip"
+    die "Timeout beim Herunterfahren von $name (Status: $(vm_state "$name"))"
+}
+
+shutdown_node() {
+    local name="$1" ip="$2"
+    if [[ "$(vm_state "$name")" != "running" ]]; then
+        log "$name laeuft nicht ($(vm_state "$name")), uebersprungen."
+        return 0
+    fi
+    log "Shutdown $name ($ip) ..."
+    # Die SSH-Verbindung bricht beim Poweroff ab -> Fehler ignorieren
+    ssh_node "$ip" sudo systemctl poweroff || true
+    wait_vm_poweroff "$name"
 }
 
 wait_api() {
-    local timeout=180
-    local elapsed=0
+    local timeout=300 elapsed=0
     log "Warte auf Kubernetes API ..."
-
-    until kubectl get nodes >/dev/null 2>&1; do
+    until kubectl get --raw=/readyz >/dev/null 2>&1; do
         sleep 5
-        ((elapsed+=5))
+        elapsed=$((elapsed + 5))
         (( elapsed < timeout )) || die "Kubernetes API nicht erreichbar."
     done
 }
 
 wait_nodes_ready() {
-    local timeout=240
-    local elapsed=0
-    log "Warte auf drei Ready-Nodes ..."
-
+    local timeout=300 elapsed=0 count
+    log "Warte auf $NODE_COUNT Ready-Nodes ..."
     while (( elapsed < timeout )); do
-        local count
-        count=$(kubectl get nodes --no-headers 2>/dev/null | awk '$2 ~ /^Ready/ {n++} END {print n+0}')
-
-        if [[ "$count" -eq 3 ]]; then
-            return 0
-        fi
+        count=$(kubectl get nodes --no-headers 2>/dev/null |
+            awk '$2 ~ /^Ready/ {n++} END {print n+0}')
+        (( count == NODE_COUNT )) && return 0
         sleep 5
-        ((elapsed+=5))
+        elapsed=$((elapsed + 5))
     done
-    die "Nicht alle drei Nodes sind Ready."
-}
-
-down() {
-    command -v kubectl >/dev/null || die "kubectl fehlt."
-    command -v ssh >/dev/null || die "ssh fehlt."
-    command -v jq >/dev/null || die "jq fehlt."
-
-    log "Prüfe Kubernetes Cluster ..."
-    kubectl get nodes
-    [[ "$(kubectl get nodes --no-headers | wc -l)" -eq 3 ]] ||
-        die "Erwartet werden genau drei Nodes."
-
-    # Original replica count sichern
-    local replicas
-    replicas=$(kubectl -n "$CILIUM_NAMESPACE" get deployment "$CILIUM_DEPLOYMENT" -o jsonpath='{.spec.replicas}')
-
-    echo "$replicas" > "$ORIGINAL_REPLICAS_FILE"
-
-    # Prüfen, ob der Operator auf dem Master läuft
-    kubectl -n "$CILIUM_NAMESPACE" get pods -l "$CILIUM_LABEL" -o wide
-
-    local master_operator
-    master_operator=$(kubectl -n "$CILIUM_NAMESPACE" get pods \
-        -l "$CILIUM_LABEL" -o json |
-        jq -r --arg node "$MASTER" \
-        '[.items[] | select(.spec.nodeName == $node)
-         | select(.status.phase == "Running")] | length')
-
-    [[ "$master_operator" -ge 1 ]] ||
-        die "Kein laufender Cilium Operator auf dem Master."
-
-    log "Cordon der Worker-Nodes ..."
-    for worker in "${WORKERS[@]}"; do
-        kubectl cordon "$worker"
-    done
-
-    # Operator auf dem Worker entfernen.
-    # Wegen Cordon kann der Ersatz nicht auf den Workern landen.
-    for worker in "${WORKERS[@]}"; do
-        local pods
-        pods=$(kubectl -n "$CILIUM_NAMESPACE" get pods \
-            -l "$CILIUM_LABEL" -o json |
-            jq -r --arg node "$worker" \
-            '.items[] | select(.spec.nodeName == $node) | .metadata.name')
-
-        for pod in $pods; do
-            log "Entferne Operator-Pod $pod auf $worker ..."
-            kubectl -n "$CILIUM_NAMESPACE" delete pod "$pod"
-        done
-    done
-
-    log "Warte auf eine Operator-Replica auf dem Master ..."
-    local ready=0
-    for _ in {1..36}; do
-        ready=$(kubectl -n "$CILIUM_NAMESPACE" get pods \
-            -l "$CILIUM_LABEL" -o json |
-            jq --arg node "$MASTER" \
-            '[.items[] | select(.spec.nodeName == $node)
-             | select(.status.phase == "Running")
-             | select(any(.status.containerStatuses[]?;
-                          .ready == true))] | length')
-
-        [[ "$ready" -ge 1 ]] && break
-        sleep 5
-    done
-
-    [[ "$ready" -ge 1 ]] ||
-        die "Cilium Operator konnte nicht auf dem Master bereitgestellt werden."
-
-    kubectl -n "$CILIUM_NAMESPACE" scale deployment "$CILIUM_DEPLOYMENT" --replicas=1
-    kubectl -n "$CILIUM_NAMESPACE" rollout status deployment "$CILIUM_DEPLOYMENT" --timeout=120s
-
-    log "Fahre Worker herunter ..."
-    for i in "${!WORKERS[@]}"; do
-        local worker="${WORKERS[$i]}"
-        local ip="${WORKER_IPS[$i]}"
-
-        log "Shutdown $worker ($ip)"
-        ssh_node "$ip" sudo systemctl poweroff || true
-        wait_ssh_down "$ip"
-    done
-
-    log "Fahre Master herunter ..."
-    ssh_node "$MASTER_IP" sudo systemctl poweroff || true
-    wait_ssh_down "$MASTER_IP"
-
-    log "Cluster vollständig heruntergefahren."
+    kubectl get nodes || true
+    die "Nicht alle $NODE_COUNT Nodes sind Ready."
 }
 
 cleanup_terminated_pods() {
@@ -173,51 +105,83 @@ cleanup_terminated_pods() {
     kubectl delete pods -A --field-selector=status.phase=Failed --ignore-not-found
 }
 
-up() {
-    command -v vagrant >/dev/null || die "Vagrant fehlt."
-    command -v kubectl >/dev/null || die "kubectl fehlt."
+down() {
+    require vagrant kubectl ssh
+    [[ -s "$KUBECONFIG" ]] || die "Kubeconfig nicht gefunden: $KUBECONFIG"
 
+    log "Pruefe Kubernetes Cluster ..."
+    kubectl get nodes
+
+    # Cordon verhindert, dass Pods waehrend des Herunterfahrens auf
+    # gerade noch laufende Nodes umgeplant werden.
+    log "Cordon aller Nodes ..."
+    local node
+    for node in "${ALL_NODES[@]}"; do
+        kubectl cordon "$node"
+    done
+
+    log "Fahre Worker herunter ..."
+    local i
+    for i in "${!WORKERS[@]}"; do
+        shutdown_node "${WORKERS[$i]}" "${WORKER_IPS[$i]}"
+    done
+
+    log "Fahre Master herunter ..."
+    shutdown_node "$MASTER" "$MASTER_IP"
+
+    log "Cluster vollstaendig heruntergefahren."
+}
+
+up() {
+    require vagrant kubectl
+    [[ -s "$KUBECONFIG" ]] || die "Kubeconfig nicht gefunden: $KUBECONFIG"
+
+    # --no-provision: die Netzwerk-Provisionierung laeuft nur beim ersten "vagrant up"
     log "Starte Master ..."
-    vagrant up "$MASTER"
+    vagrant up --no-provision "$MASTER"
     wait_api
 
     log "Starte Worker ..."
-    vagrant up "${WORKERS[@]}"
+    vagrant up --no-provision "${WORKERS[@]}"
     wait_nodes_ready
 
     log "Uncordon aller Nodes ..."
-    kubectl uncordon "$MASTER"
-    for worker in "${WORKERS[@]}"; do
-        kubectl uncordon "$worker"
+    local node
+    for node in "${ALL_NODES[@]}"; do
+        kubectl uncordon "$node"
     done
 
-    local replicas=2
-    if [[ -f "$ORIGINAL_REPLICAS_FILE" ]]; then
-        replicas=$(cat "$ORIGINAL_REPLICAS_FILE")
-    fi
+    log "Warte auf Cilium ..."
+    kubectl -n kube-system rollout status daemonset/cilium --timeout=300s
+    kubectl -n kube-system rollout status deployment/cilium-operator --timeout=300s
+    kubectl -n kube-system rollout status deployment/coredns --timeout=300s
 
-    log "Stelle Cilium Operator Replicas auf $replicas ..."
-    kubectl -n "$CILIUM_NAMESPACE" scale deployment "$CILIUM_DEPLOYMENT" --replicas="$replicas"
-    kubectl -n "$CILIUM_NAMESPACE" rollout status deployment "$CILIUM_DEPLOYMENT" --timeout=180s
     cleanup_terminated_pods
 
     log "Cluster gestartet."
-    kubectl get nodes
-    kubectl get pods -A
+    kubectl get nodes -o wide
+    kubectl get pods -A -o wide
 }
 
-# Always run Vagrant commands from the directory containing this script.
-cd "$(dirname "$0")"
+status() {
+    require vagrant kubectl
+    vagrant status
+    if kubectl get --raw=/readyz >/dev/null 2>&1; then
+        kubectl get nodes -o wide
+    else
+        log "Kubernetes API nicht erreichbar."
+    fi
+}
+
+# Vagrant-Befehle immer im Verzeichnis dieses Skripts ausfuehren.
+cd "$SCRIPT_DIR"
 
 case "${1:-}" in
-    down)
-        down
-        ;;
-    up)
-        up
-        ;;
+    down)   down ;;
+    up)     up ;;
+    status) status ;;
     *)
-        echo "Usage: $0 {down|up}"
+        echo "Usage: $0 {down|up|status}"
         exit 1
         ;;
 esac

@@ -1,0 +1,14 @@
+{{- range $node, $pool := .Values.nodes }}
+---
+apiVersion: cilium.io/v2
+kind: CiliumNodeConfig
+metadata:
+  name: {{ $node }}-ip-pool
+  namespace: kube-system
+spec:
+  nodeSelector:
+    matchLabels:
+      kubernetes.io/hostname: {{ $node }}
+  defaults:
+    ipam-default-ip-pool: {{ $pool }}
+{{- end }}
